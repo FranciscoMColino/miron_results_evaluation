@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 import open3d as o3d
+import time
 
 ### Loading data
 
@@ -122,8 +123,60 @@ for i in range(data_range[0], data_range[1] + 1):
     complete_geometries[i - data_range[0]] = geometries
             
         
-        
-        
-        
+### visualization
+
+vis = o3d.visualization.Visualizer()
+vis.create_window('Open3D', width=640, height=480)
+
+def setup_visualizer():
+    points = np.array([
+        [0, 0, 0],
+        [0, 0, 1],
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 1],
+        [10, 0, 0],
+        [10, 0, 1],
+        [10, 1, 0],
+        [10, 1, 1]
+    ])
     
+    points *= 4
     
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
+    
+    vis.add_geometry(pcd)
+    
+    view_control = vis.get_view_control()
+    view_control.rotate(0, -525)
+    view_control.rotate(500, 0)
+    
+    vis.get_render_option().point_size = 2.0
+    vis.get_render_option().line_width = 10.0
+    
+def reset_visualizer():
+    vis.clear_geometries()
+    vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0), reset_bounding_box=False)
+    
+def render_visualizer():
+    vis.poll_events()
+    vis.update_renderer()
+        
+FPS = 30
+
+setup_visualizer()
+
+while vis.poll_events():
+    for i in range(data_range[0], data_range[1] + 1):
+        reset_visualizer()
+        
+        for geometry in complete_geometries[i - data_range[0]]:
+            vis.add_geometry(geometry, reset_bounding_box=False)
+        
+        render_visualizer()
+        
+        time.sleep(1/FPS)
+        
+
+vis.destroy_window()
