@@ -52,6 +52,48 @@ singl_sem_classes = ['transporter1_mesh']
 complete_geometries = np.empty(data_range[1] - data_range[0] + 1, dtype=list)
 
 
+### Transformation matrix according to the camera coordinate system
+"""
+Global Position: (-10.000000000540384, 5.0018717613276635, 0.21277073854091316)
+Rotation Matrix:
+( (0.9999999999999993, 3.42285420007471e-8, 0), (-5.434188106286747e-22, 1.587618925213973e-14, 1), (3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14) )
+"""
+
+camera_position = np.array([-10.000000000540384, 5.0018717613276635, 0.21277073854091316])
+
+# Define the rotation matrix (3x3)
+camera_rotation = np.array([
+    [0.9999999999999993, 3.42285420007471e-8, 0],
+    [-5.434188106286747e-22, 1.587618925213973e-14, 1],
+    [3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14]
+])
+
+rotation_x_minus_90 = np.array([
+    [1, 0, 0],
+    [0, 0, 1],
+    [0, -1, 0]
+])
+
+# rotation over Z for angle
+rotation_angle = 90
+rotation_matrix = np.array([
+    [np.cos(np.radians(rotation_angle)), -np.sin(np.radians(rotation_angle)), 0],
+    [np.sin(np.radians(rotation_angle)), np.cos(np.radians(rotation_angle)), 0],
+    [0, 0, 1]
+])
+
+# Define the translation vector (3x1)
+translation_vector = -camera_position
+rotation_matrix = camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
+
+# Create the 4x4 transformation matrix
+transformation_matrix = np.eye(4)
+transformation_matrix[:3, :3] = rotation_matrix
+transformation_matrix[:3, 3] = translation_vector
+
+print(transformation_matrix)
+    
+
 for i in range(data_range[0], data_range[1] + 1):
     # Format the index with leading zeros based on the detected precision
     index_str = f"{i:0{int_precision}d}"
@@ -103,9 +145,15 @@ for i in range(data_range[0], data_range[1] + 1):
         
         transform = row[7].T
         
+        
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(points).astype(np.float64))
         pcd.transform(np.array(transform).astype(np.float64))
+        #
+        pcd.translate(translation_vector)
+        pcd.rotate(rotation_matrix, center=(0, 0, 0))
+        
+        
         
         if class_name in singl_sem_classes:
             singl_sem_classes_pcds[class_name].points.extend(pcd.points)
