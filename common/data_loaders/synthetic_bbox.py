@@ -5,7 +5,7 @@ import open3d as o3d
 
 class SyntheticBbox():
     def __init__(self, data_path, int_precision=4, 
-                 singl_sem_classes=None, translate_vector=None, rotation_matrix=None):
+                 singl_sem_classes=None, translation_vector=None, rotation_matrix=None):
         self.data_path = data_path
         self.int_precision = int_precision
         self.file_indices = []
@@ -14,7 +14,7 @@ class SyntheticBbox():
         self.complete_labels = None
         self.singl_sem_classes = singl_sem_classes
         self.multi_sem_classes = None
-        self.translate_vector = translate_vector
+        self.translation_vector = translation_vector
         self.rotation_matrix = rotation_matrix
         
         
@@ -90,7 +90,7 @@ class SyntheticBbox():
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(np.array(points).astype(np.float64))
                 pcd.transform(np.array(transform).astype(np.float64))
-                pcd.translate(self.translate_vector)
+                pcd.translate(self.translation_vector)
                 pcd.rotate(self.rotation_matrix, center=(0, 0, 0))
                 points = np.asarray(pcd.points)
                 

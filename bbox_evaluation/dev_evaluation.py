@@ -1,8 +1,10 @@
 import os
 import json
+import yaml
 import numpy as np
 import open3d as o3d
 import time
+import argparse
 
 from common.o3d_visualizer import O3dVisualizer
 from common.data_loaders.synthetic_bbox import SyntheticBbox
@@ -10,11 +12,28 @@ from common.data_loaders.detection_bbox import DetectionBbox
 
 
 def main():
+    
+    parser = argparse.ArgumentParser(description='Visualize detection and synthetic data')
+    parser.add_argument('config_file', type=str, help='Path to the config file')
+    args = parser.parse_args()
+    
+    # config file in yaml format
+    
+    if not os.path.exists(args.config_file):
+        raise FileNotFoundError(f"Config file {args.config_file} not found")
+    
+    with open(args.config_file, 'r') as file:
+        config_data = yaml.safe_load(file)
+    
+    
+    
+    
     ### Load detection data
 
-    detection_data_path = '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2'
+    detection_data_path = config_data['detection_loader']['data_path']
+    detection_int_precision = config_data['detection_loader']['int_precision']
 
-    detection_bbox = DetectionBbox(detection_data_path, int_precision=5)
+    detection_bbox = DetectionBbox(detection_data_path, int_precision=detection_int_precision)
     detection_bbox.setup()
     detection_bbox.load_data()
 
@@ -42,38 +61,22 @@ def main():
         complete_detection_pcds[i - detection_data_range[0]] = local_pcds
         complete_detection_bboxes[i - detection_data_range[0]] = local_bboxes
         complete_detection_timestamps[i - detection_data_range[0]] = detection_bbox.complete_timestamps[i - detection_data_range[0]]
-        
-    # estimate fps from first and last timestamps and number of frames
-    if complete_detection_timestamps.all():
-        start_time = complete_detection_timestamps[0]
-        end_time = complete_detection_timestamps[-1]
-        start_seconds = start_time['seconds'] + start_time['nanoseconds'] / 1e9
-        end_seconds = end_time['seconds'] + end_time['nanoseconds'] / 1e9
-        num_frames = len(complete_detection_timestamps)
-        detection_fps = num_frames / (end_seconds - start_seconds)
-    print(f"Estimated FPS: {detection_fps}")
 
     # Load synthetic data
 
-    synthetic_data_path = '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1'
-    synthetic_fps = 30
-        
-    ### Transformations according to the camera coordinate system
+    synthetic_data_path = config_data['synthetic_loader']['data_path']
+    synthetic_int_precision = config_data['synthetic_loader']['int_precision']
+    synthetic_single_sem_classes = config_data['synthetic_loader']['single_sem_classes']
+    synthetic_camera_position = np.array(config_data['synthetic_loader']['camera_position'])
+    synthetic_camera_rotation = np.array(config_data['synthetic_loader']['camera_rotation'])
+    
     """
     Global Position: (-10.000000000540384, 5.0018717613276635, 0.21277073854091316)
     Rotation Matrix:
     ( (0.9999999999999993, 3.42285420007471e-8, 0), (-5.434188106286747e-22, 1.587618925213973e-14, 1), (3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14) )
     """
-
-    camera_position = np.array([-10.000000000540384, 5.0018717613276635, 0.21277073854091316])
-
-    # Define the rotation matrix (3x3)
-    camera_rotation = np.array([
-        [0.9999999999999993, 3.42285420007471e-8, 0],
-        [-5.434188106286747e-22, 1.587618925213973e-14, 1],
-        [3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14]
-    ])
-
+        
+    ### Transformations according to the camera coordinate system
     rotation_x_minus_90 = np.array([
         [1, 0, 0],
         [0, 0, 1],
@@ -89,13 +92,11 @@ def main():
     ])
 
     # Define the translation vector (3x1)
-    translation_vector = -camera_position
-    rotation_matrix = camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
+    translation_vector = -synthetic_camera_position
+    rotation_matrix = synthetic_camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
                 
-    singl_sem_classes = ['transporter1_mesh']
-
-    synthetic_bbox = SyntheticBbox(synthetic_data_path, singl_sem_classes=singl_sem_classes,
-                                    translate_vector=translation_vector, rotation_matrix=rotation_matrix)
+    synthetic_bbox = SyntheticBbox(synthetic_data_path, singl_sem_classes=synthetic_single_sem_classes, int_precision=synthetic_int_precision,
+                                    translation_vector=translation_vector, rotation_matrix=rotation_matrix)
     synthetic_bbox.setup()
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
@@ -126,11 +127,22 @@ def main():
         
     ### Global parameters
 
-    detection_frame_offset = 0
-    synthetic_frame_offset = 0  
+    detection_frame_offset = config_data['alignment_config']['detection_frame_offset']
+    synthetic_frame_offset = config_data['alignment_config']['synthetic_frame_offset']
+    synthetic_fps = config_data['alignment_config']['synthetic_fps']
         
     if detection_frame_offset < 0 or synthetic_frame_offset < 0:
         raise ValueError("Frame offsets must be positive")
+    
+    # estimate fps from first and last timestamps and number of frames
+    if complete_detection_timestamps.all():
+        start_time = complete_detection_timestamps[0]
+        end_time = complete_detection_timestamps[-1]
+        start_seconds = start_time['seconds'] + start_time['nanoseconds'] / 1e9
+        end_seconds = end_time['seconds'] + end_time['nanoseconds'] / 1e9
+        num_frames = len(complete_detection_timestamps)
+        detection_fps = num_frames / (end_seconds - start_seconds)
+    print(f"Estimated FPS: {detection_fps}")
         
     ### Visualization
 
