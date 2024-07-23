@@ -51,7 +51,7 @@ if complete_detection_timestamps.all():
     detection_fps = num_frames / (end_seconds - start_seconds)
 print(f"Estimated FPS: {detection_fps}")
 
-### Load synthetic data
+# Load synthetic data
 
 synthetic_data_path = '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1'
 synthetic_fps = 30
@@ -121,8 +121,16 @@ for i in range(synthetic_data_range[0], synthetic_data_range[1] + 1):
         bbox = pcd.get_axis_aligned_bounding_box()
         bbox.color = (0, 1, 0)
         complete_synthetic_bboxes[i - synthetic_data_range[0]].append(bbox)
-        
-### visualization
+     
+### Global parameters
+
+detection_frame_offset = 0
+synthetic_frame_offset = 0  
+     
+if detection_frame_offset < 0 or synthetic_frame_offset < 0:
+    raise ValueError("Frame offsets must be positive")
+     
+### Visualization
 
 o3d_visualizer = O3dVisualizer()
 o3d_visualizer.setup()
@@ -133,7 +141,10 @@ data_range = detection_data_range
 
 # for now, synthetic data will be adapted to detection data
 
-for i in range(data_range[0], data_range[1] + 1):
+range_start = detection_data_range[0] + detection_frame_offset
+range_end = detection_data_range[1]
+
+for i in range(range_start, range_end + 1):
     o3d_visualizer.reset()
     
     for geometry in complete_detection_pcds[i - data_range[0]]:
@@ -143,13 +154,13 @@ for i in range(data_range[0], data_range[1] + 1):
         geometry.color = (1, 0, 0)
         o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
         
-    current_detection_timestamp = complete_detection_timestamps[i - data_range[0]]
+    current_detection_timestamp = complete_detection_timestamps[i - range_start]
     
     delta_seconds = current_detection_timestamp['seconds'] - intial_detection_timestamp['seconds']
     delta_nanoseconds = current_detection_timestamp['nanoseconds'] - intial_detection_timestamp['nanoseconds']
     
     # calculate closest frame from synthetic data
-    synthetic_frame = int((delta_seconds + delta_nanoseconds / 1e9) * synthetic_fps)
+    synthetic_frame = int((delta_seconds + delta_nanoseconds / 1e9) * synthetic_fps) + synthetic_frame_offset
     
     if synthetic_frame < 0:
         continue
