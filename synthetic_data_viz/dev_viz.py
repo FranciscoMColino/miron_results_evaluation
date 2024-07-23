@@ -4,6 +4,8 @@ import numpy as np
 import open3d as o3d
 import time
 
+from common.o3d_visualizer import O3dVisualizer
+
 ### Loading data
 
 synthetic_data_path = '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1'
@@ -43,14 +45,6 @@ else:
     print("No data points found")
     exit(1)
             
-            
-            
-multi_sem_classes = ['swetfloorsign']
-singl_sem_classes = ['transporter1_mesh']
-
-# initiate np array with size of data_range
-complete_geometries = np.empty(data_range[1] - data_range[0] + 1, dtype=list)
-
 
 ### Transformation matrix according to the camera coordinate system
 """
@@ -91,7 +85,13 @@ transformation_matrix = np.eye(4)
 transformation_matrix[:3, :3] = rotation_matrix
 transformation_matrix[:3, 3] = translation_vector
 
-print(transformation_matrix)
+            
+multi_sem_classes = ['swetfloorsign']
+singl_sem_classes = ['transporter1_mesh']
+
+# initiate np array with size of data_range
+complete_pcds = np.empty(data_range[1] - data_range[0] + 1, dtype=list)
+complete_bboxes = np.empty(data_range[1] - data_range[0] + 1, dtype=list)
     
 
 for i in range(data_range[0], data_range[1] + 1):
@@ -152,79 +152,48 @@ for i in range(data_range[0], data_range[1] + 1):
         #
         pcd.translate(translation_vector)
         pcd.rotate(rotation_matrix, center=(0, 0, 0))
-        
-        
-        
+            
         if class_name in singl_sem_classes:
             singl_sem_classes_pcds[class_name].points.extend(pcd.points)
         elif class_name in multi_sem_classes:
             multi_sem_classes_pcds[class_name].append(pcd)
             
-    geometries = []
-    
     for class_name in singl_sem_classes:
-        geometries.append(singl_sem_classes_pcds[class_name])
+        pcd_geometries.append(singl_sem_classes_pcds[class_name])
         
     for class_name in multi_sem_classes:
-        geometries.extend(multi_sem_classes_pcds[class_name])
+        pcd_geometries.extend(multi_sem_classes_pcds[class_name])
         
-    complete_geometries[i - data_range[0]] = geometries
+    bboxes_geometries = []
+    
+    for pcd in pcd_geometries:
+        bboxes_geometries.append(pcd.get_axis_aligned_bounding_box())
+        
+        
+    complete_pcds[i - data_range[0]] = pcd_geometries
+    complete_bboxes[i - data_range[0]] = bboxes_geometries
             
         
 ### visualization
 
-vis = o3d.visualization.Visualizer()
-vis.create_window('Open3D', width=640, height=480)
-
-def setup_visualizer():
-    points = np.array([
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 1, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [10, 0, 0],
-        [10, 0, 1],
-        [10, 1, 0],
-        [10, 1, 1]
-    ])
-    
-    points *= 4
-    
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    
-    vis.add_geometry(pcd)
-    
-    view_control = vis.get_view_control()
-    view_control.rotate(0, -525)
-    view_control.rotate(500, 0)
-    
-    vis.get_render_option().point_size = 2.0
-    vis.get_render_option().line_width = 10.0
-    
-def reset_visualizer():
-    vis.clear_geometries()
-    vis.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0), reset_bounding_box=False)
-    
-def render_visualizer():
-    vis.poll_events()
-    vis.update_renderer()
+o3d_visualizer = O3dVisualizer()
+o3d_visualizer.setup()
         
 FPS = 30
 
-setup_visualizer()
+for i in range(data_range[0], data_range[1] + 1):
+    o3d_visualizer.reset()
+    
+    for geometry in complete_pcds[i - data_range[0]]:
+        o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+        
+    for geometry in complete_bboxes[i - data_range[0]]:
+        geometry.color = (1, 0, 0)
+        o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+    
+    o3d_visualizer.render()
+    
+    time.sleep(1/FPS)
+        
 
-while vis.poll_events():
-    for i in range(data_range[0], data_range[1] + 1):
-        reset_visualizer()
-        
-        for geometry in complete_geometries[i - data_range[0]]:
-            vis.add_geometry(geometry, reset_bounding_box=False)
-        
-        render_visualizer()
-        
-        time.sleep(1/FPS)
-        
-
-vis.destroy_window()
+o3d_visualizer.vis.destroy_window()
