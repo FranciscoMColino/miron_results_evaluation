@@ -38,10 +38,6 @@ if data_range[0] is not None and data_range[1] is not None:
         if os.path.exists(labels_file_path):
             with open(labels_file_path, 'r') as labels_file:
                 labels_data = json.load(labels_file)
-            
-            print(f"Data for frame {i}: {labels_data}")
-        else:
-            print(f"File not found for frame {i}: {labels_file_path}")
 else:
     print("No data points found")
     exit(1)
