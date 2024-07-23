@@ -48,12 +48,13 @@ if complete_detection_timestamps.all():
     start_seconds = start_time['seconds'] + start_time['nanoseconds'] / 1e9
     end_seconds = end_time['seconds'] + end_time['nanoseconds'] / 1e9
     num_frames = len(complete_detection_timestamps)
-    fps = num_frames / (end_seconds - start_seconds)
-print(f"Estimated FPS: {fps}")
+    detection_fps = num_frames / (end_seconds - start_seconds)
+print(f"Estimated FPS: {detection_fps}")
 
 ### Load synthetic data
 
 synthetic_data_path = '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1'
+synthetic_fps = 30
     
 ### Transformations according to the camera coordinate system
 """
@@ -125,32 +126,49 @@ for i in range(synthetic_data_range[0], synthetic_data_range[1] + 1):
 
 o3d_visualizer = O3dVisualizer()
 o3d_visualizer.setup()
-        
-FPS = 30
 
-# min and max of data range
-data_range = (max(detection_data_range[0], synthetic_data_range[0]), min(detection_data_range[1], synthetic_data_range[1]))
+intial_detection_timestamp = complete_detection_timestamps[0]
+
+data_range = detection_data_range
+
+# for now, synthetic data will be adapted to detection data
 
 for i in range(data_range[0], data_range[1] + 1):
     o3d_visualizer.reset()
     
     for geometry in complete_detection_pcds[i - data_range[0]]:
         o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-    
-    for geometry in complete_synthetic_pcds[i - data_range[0]]:
-        o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-    
+        
     for geometry in complete_detection_bboxes[i - data_range[0]]:
         geometry.color = (1, 0, 0)
         o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+        
+    current_detection_timestamp = complete_detection_timestamps[i - data_range[0]]
     
-    for geometry in complete_synthetic_bboxes[i - data_range[0]]:
+    delta_seconds = current_detection_timestamp['seconds'] - intial_detection_timestamp['seconds']
+    delta_nanoseconds = current_detection_timestamp['nanoseconds'] - intial_detection_timestamp['nanoseconds']
+    
+    # calculate closest frame from synthetic data
+    synthetic_frame = int((delta_seconds + delta_nanoseconds / 1e9) * synthetic_fps)
+    
+    if synthetic_frame < 0:
+        continue
+    elif synthetic_frame >= len(complete_synthetic_pcds):
+        break
+        
+    
+    for geometry in complete_synthetic_pcds[synthetic_frame]:
+        o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+    
+    for geometry in complete_synthetic_bboxes[synthetic_frame]:
         geometry.color = (0, 1, 0)
         o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
     
+    
+    
     o3d_visualizer.render()
     
-    time.sleep(1/FPS)
+    time.sleep(1/detection_fps)
         
 
 o3d_visualizer.vis.destroy_window()
