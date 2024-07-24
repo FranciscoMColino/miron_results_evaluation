@@ -9,6 +9,7 @@ import argparse
 from common.o3d_visualizer import O3dVisualizer
 from common.data_control.synthetic_bbox import SyntheticBbox
 from common.data_control.detection_bbox import DetectionBbox
+from common.data_control.utils import *
 
 
 def visualize_data(config_data, o3d_visualizer):
@@ -23,28 +24,7 @@ def visualize_data(config_data, o3d_visualizer):
 
     detection_data_range = detection_bbox.data_range
 
-    complete_detection_pcds = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=list)
-    complete_detection_bboxes = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=list)
-    complete_detection_timestamps = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=dict)
-
-    for i in range(detection_data_range[0], detection_data_range[1] + 1):
-        
-        local_pcds = []
-        local_bboxes = []
-        
-        for bbox_points in detection_bbox.complete_bbox_points[i - detection_data_range[0]]:
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(bbox_points)
-            pcd.paint_uniform_color([1, 0, 1])
-            local_pcds.append(pcd)
-            
-            bbox = o3d.geometry.OrientedBoundingBox.create_from_points(pcd.points)
-            bbox.color = (1, 0, 0)
-            local_bboxes.append(bbox)
-            
-        complete_detection_pcds[i - detection_data_range[0]] = local_pcds
-        complete_detection_bboxes[i - detection_data_range[0]] = local_bboxes
-        complete_detection_timestamps[i - detection_data_range[0]] = detection_bbox.complete_timestamps[i - detection_data_range[0]]
+    complete_detection_pcds, complete_detection_bboxes, complete_detection_timestamps = extract_complete_data_from_detection_bboxes(detection_bbox)
 
     # Load synthetic data
 
@@ -60,24 +40,8 @@ def visualize_data(config_data, o3d_visualizer):
     ( (0.9999999999999993, 3.42285420007471e-8, 0), (-5.434188106286747e-22, 1.587618925213973e-14, 1), (3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14) )
     """
         
-    ### Transformations according to the camera coordinate system
-    rotation_x_minus_90 = np.array([
-        [1, 0, 0],
-        [0, 0, 1],
-        [0, -1, 0]
-    ])
-
-    # rotation over Z for angle
-    rotation_angle = 90
-    rotation_matrix = np.array([
-        [np.cos(np.radians(rotation_angle)), -np.sin(np.radians(rotation_angle)), 0],
-        [np.sin(np.radians(rotation_angle)), np.cos(np.radians(rotation_angle)), 0],
-        [0, 0, 1]
-    ])
-
-    # Define the translation vector (3x1)
-    translation_vector = -synthetic_camera_position
-    rotation_matrix = synthetic_camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
+    
+    translation_vector, rotation_matrix = get_translation_and_rotation_from_camera_properties(synthetic_camera_position, synthetic_camera_rotation)
                 
     synthetic_bbox = SyntheticBbox(synthetic_data_path, singl_sem_classes=synthetic_single_sem_classes, int_precision=synthetic_int_precision,
                                     translation_vector=translation_vector, rotation_matrix=rotation_matrix)
@@ -85,29 +49,7 @@ def visualize_data(config_data, o3d_visualizer):
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
 
-    synthetic_data_range = synthetic_bbox.data_range
-
-    # initiate np array with size of data_range
-    complete_synthetic_pcds = np.empty(synthetic_data_range[1] - synthetic_data_range[0] + 1, dtype=list)
-    complete_synthetic_bboxes = np.empty(synthetic_data_range[1] - synthetic_data_range[0] + 1, dtype=list)
-        
-    for i in range(synthetic_data_range[0], synthetic_data_range[1] + 1):
-        complete_synthetic_pcds[i - synthetic_data_range[0]] = []
-        complete_synthetic_bboxes[i - synthetic_data_range[0]] = []
-
-        for j, bbox_points in enumerate(synthetic_bbox.complete_bbox_points[i - synthetic_data_range[0]]):
-            
-            bbox_points = np.array(bbox_points).astype(np.float64)
-            
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(np.array(bbox_points).astype(np.float64))
-            # colorize the synthetic point clouds
-            pcd.paint_uniform_color([0, 1, 1])
-            complete_synthetic_pcds[i - synthetic_data_range[0]].append(pcd)
-            
-            bbox = pcd.get_axis_aligned_bounding_box()
-            bbox.color = (0, 1, 0)
-            complete_synthetic_bboxes[i - synthetic_data_range[0]].append(bbox)
+    complete_synthetic_pcds, complete_synthetic_bboxes = extract_complete_data_from_synthetic_bboxes(synthetic_bbox)
         
     ### Global parameters
 
@@ -119,13 +61,7 @@ def visualize_data(config_data, o3d_visualizer):
         raise ValueError("Frame offsets must be positive")
     
     # estimate fps from first and last timestamps and number of frames
-    if complete_detection_timestamps.all():
-        start_time = complete_detection_timestamps[0]
-        end_time = complete_detection_timestamps[-1]
-        start_seconds = start_time['seconds'] + start_time['nanoseconds'] / 1e9
-        end_seconds = end_time['seconds'] + end_time['nanoseconds'] / 1e9
-        num_frames = len(complete_detection_timestamps)
-        detection_fps = num_frames / (end_seconds - start_seconds)
+    detection_fps = estimate_detection_frame_rate(complete_detection_timestamps)
     print(f"Estimated FPS: {detection_fps}")
         
     ### Visualization
