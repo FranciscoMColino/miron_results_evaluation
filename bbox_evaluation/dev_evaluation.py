@@ -25,9 +25,6 @@ def main():
     with open(args.config_file, 'r') as file:
         config_data = yaml.safe_load(file)
     
-    
-    
-    
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
