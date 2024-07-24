@@ -3,6 +3,7 @@ import json
 import yaml
 import numpy as np
 import open3d as o3d
+import open3d.visualization.gui as gui
 import time
 import argparse
 
@@ -132,60 +133,108 @@ def visualize_data(config_data, o3d_visualizer):
 
     o3d_visualizer.setup()
 
-    intial_detection_timestamp = complete_detection_timestamps[0]
-
+    initial_detection_timestamp = complete_detection_timestamps[0]
     data_range = detection_data_range
-
-    # for now, synthetic data will be adapted to detection data
-
     range_start = detection_data_range[0] + detection_frame_offset
     range_end = detection_data_range[1]
-
     playback_fps = detection_fps * config_data['alignment_config']['playback_speed']
 
-    for i in range(range_start, range_end + 1):
+    paused = False
+    run = True
+    exit = False
 
-        start_time = time.time()
+    #def key_callback(vis, action, mods):
+    #    print(f"Key action: {action} - {mods}")
+    #    nonlocal paused, rerun, exit
+    #    if action == 32:  # Space bar key
+    #        paused = not paused
+    #    elif action == 114:  # R key
+    #        rerun = True
+    #        vis.close()
+    #    elif action == 256:  # ESC key
+    #        exit = True
+    #        vis.close()
+    #    return False
+    
+    def pause_key_callback(vis):
+        nonlocal paused
+        paused = not paused
+        return False
+    
+    def rerun_key_callback(vis):
+        nonlocal run
+        run = True
+        vis.close()
+        return False
+    
+    def exit_key_callback(vis):
+        nonlocal exit
+        exit = True
+        vis.close()
+        return False
 
-        o3d_visualizer.reset()
-        
-        for geometry in complete_detection_pcds[i - data_range[0]]:
-            o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-            
-        for geometry in complete_detection_bboxes[i - data_range[0]]:
-            geometry.color = (1, 0, 0)
-            o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-            
-        current_detection_timestamp = complete_detection_timestamps[i - range_start]
-        
-        delta_seconds = current_detection_timestamp['seconds'] - intial_detection_timestamp['seconds']
-        delta_nanoseconds = current_detection_timestamp['nanoseconds'] - intial_detection_timestamp['nanoseconds']
-        
-        # calculate closest frame from synthetic data
-        synthetic_frame = int((delta_seconds + delta_nanoseconds / 1e9) * synthetic_fps) + synthetic_frame_offset
-        
-        if synthetic_frame < 0:
-            continue
-        elif synthetic_frame >= len(complete_synthetic_pcds):
+    o3d_visualizer.vis.register_key_callback(32, pause_key_callback)  # Space bar key
+    o3d_visualizer.vis.register_key_callback(67, rerun_key_callback)  # C key
+    o3d_visualizer.vis.register_key_callback(256, exit_key_callback)  # ESC key
+
+    while not exit:
+        if run:
+            run = False
+        else:
             break
-            
-        
-        for geometry in complete_synthetic_pcds[synthetic_frame]:
-            o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-        
-        for geometry in complete_synthetic_bboxes[synthetic_frame]:
-            geometry.color = (0, 1, 0)
-            o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-        
-        o3d_visualizer.render()
 
-        end_time = time.time()
-        
-        while (end_time - start_time) < 1 / playback_fps:
+        for i in range(range_start, range_end + 1):
+            start_time = time.time()
+            if exit or run:
+                break
+
+            current_detection_timestamp = complete_detection_timestamps[i - range_start]
+            delta_seconds = current_detection_timestamp['seconds'] - initial_detection_timestamp['seconds']
+            delta_nanoseconds = current_detection_timestamp['nanoseconds'] - initial_detection_timestamp['nanoseconds']
+
+            # calculate closest frame from synthetic data
+            synthetic_frame = int((delta_seconds + delta_nanoseconds / 1e9) * synthetic_fps) + synthetic_frame_offset
+
+            if synthetic_frame < 0:
+                continue
+            elif synthetic_frame >= len(complete_synthetic_pcds):
+                break
+
+            o3d_visualizer.reset()
+
+            for geometry in complete_detection_pcds[i - data_range[0]]:
+                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+
+            for geometry in complete_detection_bboxes[i - data_range[0]]:
+                geometry.color = (1, 0, 0)
+                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+
+            for geometry in complete_synthetic_pcds[synthetic_frame]:
+                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+
+            for geometry in complete_synthetic_bboxes[synthetic_frame]:
+                geometry.color = (0, 1, 0)
+                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+
+            o3d_visualizer.render()
+
             end_time = time.time()
-            o3d_visualizer.render()        
-        
+
+            while (end_time - start_time) < 1 / playback_fps:
+                end_time = time.time()
+                o3d_visualizer.render()
+                if paused:
+                    while paused and not exit and not run:
+                        o3d_visualizer.render()
+                        time.sleep(1/60)
+
+        o3d_visualizer.render()
+        while not exit and not run:
+            o3d_visualizer.render()
+            time.sleep(1/60)
+
     o3d_visualizer.vis.destroy_window()
+
 
 
 def main():

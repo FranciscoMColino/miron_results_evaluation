@@ -4,7 +4,7 @@ import numpy as np
 class O3dVisualizer:
     
     def __init__(self):
-        self.vis = o3d.visualization.Visualizer()
+        self.vis = o3d.visualization.VisualizerWithKeyCallback()
         self.vis.create_window('Open3D', width=640, height=480)
     
     def setup(self):
