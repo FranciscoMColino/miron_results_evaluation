@@ -142,18 +142,24 @@ def visualize_data(config_data, o3d_visualizer):
 
             o3d_visualizer.reset()
 
-            for geometry in complete_detection_pcds[detection_frame]:
+            for i, geometry in enumerate(complete_detection_pcds[detection_frame]):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
-            for geometry in complete_detection_bboxes[detection_frame]:
-                geometry.color = (1, 0, 0)
+            for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
+                if i in unmatched_detections:
+                    geometry.color = (1, 0, 0)
+                else:
+                    geometry.color = (0, 0.8, 0)
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
-            for geometry in complete_synthetic_pcds[synthetic_frame]:
+            for i, geometry in enumerate(complete_synthetic_pcds[synthetic_frame]):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
-            for geometry in complete_synthetic_bboxes[synthetic_frame]:
-                geometry.color = (0, 1, 0)
+            for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
+                if i in unmatched_synthetic:
+                    geometry.color = (0, 0, 1)
+                else:
+                    geometry.color = (0, 0.4, 0)
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             o3d_visualizer.render()
