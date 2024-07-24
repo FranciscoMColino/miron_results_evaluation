@@ -11,20 +11,7 @@ from common.data_loaders.synthetic_bbox import SyntheticBbox
 from common.data_loaders.detection_bbox import DetectionBbox
 
 
-def main():
-    
-    parser = argparse.ArgumentParser(description='Visualize detection and synthetic data')
-    parser.add_argument('config_file', type=str, help='Path to the config file')
-    args = parser.parse_args()
-    
-    # config file in yaml format
-    
-    if not os.path.exists(args.config_file):
-        raise FileNotFoundError(f"Config file {args.config_file} not found")
-    
-    with open(args.config_file, 'r') as file:
-        config_data = yaml.safe_load(file)
-    
+def visualize_data(config_data, o3d_visualizer):
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
@@ -143,7 +130,6 @@ def main():
         
     ### Visualization
 
-    o3d_visualizer = O3dVisualizer()
     o3d_visualizer.setup()
 
     intial_detection_timestamp = complete_detection_timestamps[0]
@@ -155,7 +141,12 @@ def main():
     range_start = detection_data_range[0] + detection_frame_offset
     range_end = detection_data_range[1]
 
+    playback_fps = detection_fps * config_data['alignment_config']['playback_speed']
+
     for i in range(range_start, range_end + 1):
+
+        start_time = time.time()
+
         o3d_visualizer.reset()
         
         for geometry in complete_detection_pcds[i - data_range[0]]:
@@ -186,14 +177,32 @@ def main():
             geometry.color = (0, 1, 0)
             o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
         
-        
-        
         o3d_visualizer.render()
-        
-        time.sleep(1/detection_fps)
-            
 
+        end_time = time.time()
+        
+        while (end_time - start_time) < 1 / playback_fps:
+            end_time = time.time()
+            o3d_visualizer.render()        
+        
     o3d_visualizer.vis.destroy_window()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Visualize detection and synthetic data')
+    parser.add_argument('config_file', type=str, help='Path to the config file')
+    args = parser.parse_args()
     
+    # config file in yaml format
+    if not os.path.exists(args.config_file):
+        raise FileNotFoundError(f"Config file {args.config_file} not found")
+    
+    with open(args.config_file, 'r') as file:
+        config_data = yaml.safe_load(file)
+    
+    o3d_visualizer = O3dVisualizer()
+
+    visualize_data(config_data, o3d_visualizer)
+
 if __name__ == "__main__":
     main()
