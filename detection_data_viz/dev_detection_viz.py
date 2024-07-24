@@ -5,7 +5,7 @@ import open3d as o3d
 import time
 
 from common.o3d_visualizer import O3dVisualizer
-from common.data_loaders.detection_bbox import DetectionBbox
+from common.data_control.detection_bbox import DetectionBbox
 
 detection_data_path = '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2'
 

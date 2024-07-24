@@ -5,7 +5,7 @@ import open3d as o3d
 import time
 
 from common.o3d_visualizer import O3dVisualizer
-from common.data_loaders.synthetic_bbox import SyntheticBbox
+from common.data_control.synthetic_bbox import SyntheticBbox
 
 ### Loading data
 

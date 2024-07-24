@@ -3,13 +3,12 @@ import json
 import yaml
 import numpy as np
 import open3d as o3d
-import open3d.visualization.gui as gui
 import time
 import argparse
 
 from common.o3d_visualizer import O3dVisualizer
-from common.data_loaders.synthetic_bbox import SyntheticBbox
-from common.data_loaders.detection_bbox import DetectionBbox
+from common.data_control.synthetic_bbox import SyntheticBbox
+from common.data_control.detection_bbox import DetectionBbox
 
 
 def visualize_data(config_data, o3d_visualizer):

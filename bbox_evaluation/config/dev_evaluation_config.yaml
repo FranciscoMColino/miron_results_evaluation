@@ -17,6 +17,6 @@ synthetic_loader:
 
 alignment_config:
   detection_frame_offset: 0
-  synthetic_frame_offset: 0
+  synthetic_frame_offset: 1
   synthetic_fps: 30
-  playback_speed: 2.0 # 1.0 for real-time playback, used for better visualization
+  playback_speed: 1.0 # 1.0 for real-time playback, used for better visualization
