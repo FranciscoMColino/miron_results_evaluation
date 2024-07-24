@@ -13,11 +13,28 @@ from common.data_control.utils import *
 
 from bbox_evaluation.association import *
 
+# TODO move to file
+DETECTION_POINT_COLOR = [0.7, 0, 0.7] 
+SYNTHETIC_POINT_COLOR = [0, 0.7, 0.7]
+DETECTION_BBOX_COLOR = [0.3, 0, 0.3]
+SYNTHETIC_BBOX_COLOR = [0, 0.3, 0.3]
+DETECTION_CENTER_COLOR = [0.7, 0.3, 0.7]
+SYNTHETIC_CENTER_COLOR = [0.3, 0.7, 0.7]
+DETECTION_MATCH_COLOR = [0, 0.8, 0]
+SYNTHETIC_MATCH_COLOR = [0, 0.4, 0]
+
 def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
     min_coords = np.min(bbox, axis=0)
     max_coords = np.max(bbox, axis=0)
     return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
+
+def draw_centroid(vis, centroid, color):
+    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
+    sphere.compute_vertex_normals()
+    sphere.paint_uniform_color(color)
+    sphere.translate(centroid)
+    vis.add_geometry(sphere, reset_bounding_box=False)
 
 def visualize_data(config_data, o3d_visualizer):
     ### Load detection data
@@ -140,27 +157,38 @@ def visualize_data(config_data, o3d_visualizer):
             print(f"Matched detections: {len(matches)}, Unmatched detections: {len(unmatched_detections)}, Unmatched synthetic: {len(unmatched_synthetic)}")
             print(f"IOU values: {iou_values}")
 
+            detection_centroids = [np.asarray(bbox.get_center()) for bbox in complete_detection_bboxes[detection_frame]]
+            synthetic_centroids = [np.asarray(bbox.get_center()) for bbox in complete_synthetic_bboxes[synthetic_frame]]
+
             o3d_visualizer.reset()
 
             for i, geometry in enumerate(complete_detection_pcds[detection_frame]):
+                geometry.paint_uniform_color(DETECTION_POINT_COLOR)
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
                 if i in unmatched_detections:
-                    geometry.color = (1, 0, 0)
+                    geometry.color = DETECTION_BBOX_COLOR
                 else:
-                    geometry.color = (0, 0.8, 0)
+                    geometry.color = DETECTION_MATCH_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
+            for i, centroid in enumerate(detection_centroids):
+                draw_centroid(o3d_visualizer.vis, centroid, DETECTION_CENTER_COLOR)
+
             for i, geometry in enumerate(complete_synthetic_pcds[synthetic_frame]):
+                geometry.paint_uniform_color(SYNTHETIC_POINT_COLOR)
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
                 if i in unmatched_synthetic:
-                    geometry.color = (0, 0, 1)
+                    geometry.color = SYNTHETIC_BBOX_COLOR
                 else:
-                    geometry.color = (0, 0.4, 0)
+                    geometry.color = SYNTHETIC_MATCH_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+
+            for i, centroid in enumerate(synthetic_centroids):
+                draw_centroid(o3d_visualizer.vis, centroid, SYNTHETIC_CENTER_COLOR)
 
             o3d_visualizer.render()
 
