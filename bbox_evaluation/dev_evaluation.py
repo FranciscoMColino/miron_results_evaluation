@@ -142,19 +142,6 @@ def visualize_data(config_data, o3d_visualizer):
     paused = False
     run = True
     exit = False
-
-    #def key_callback(vis, action, mods):
-    #    print(f"Key action: {action} - {mods}")
-    #    nonlocal paused, rerun, exit
-    #    if action == 32:  # Space bar key
-    #        paused = not paused
-    #    elif action == 114:  # R key
-    #        rerun = True
-    #        vis.close()
-    #    elif action == 256:  # ESC key
-    #        exit = True
-    #        vis.close()
-    #    return False
     
     def pause_key_callback(vis):
         nonlocal paused
