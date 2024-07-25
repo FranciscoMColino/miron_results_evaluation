@@ -141,3 +141,58 @@ def associate_3d(bboxes1, bboxes2, iou_threshold):
         matches = np.concatenate(matches, axis=0)
     
     return matches, unmatched_bboxes1, unmatched_bboxes2, iou_values
+
+def euclidean_distance_batch(centers1, centers2):
+    """
+    Computes Euclidean distances between two sets of points in 2D.
+    centers1, centers2: Nx2 arrays, where each row is [x, y]
+    Returns: NxM distance matrix, where dist_matrix[i, j] is the distance between center1[i] and center2[j]
+    """
+    dists = np.linalg.norm(centers1[:, None, :] - centers2[None, :, :], axis=2)
+    return dists
+
+def associate_euclidean(centers1, centers2, dist_threshold):
+    if len(centers1) == 0 or len(centers2) == 0:
+        matches = np.empty((0, 2), dtype=int)
+        unmatched_centers1 = np.arange(len(centers1))
+        unmatched_centers2 = np.arange(len(centers2))
+        return matches, unmatched_centers1, unmatched_centers2, []
+
+    dist_matrix = euclidean_distance_batch(centers1, centers2)
+    
+    if min(dist_matrix.shape) > 0:
+        a = (dist_matrix < dist_threshold).astype(np.int32)
+        if a.sum(1).max() == 1 and a.sum(0).max() == 1:
+            matched_indices = np.stack(np.where(a), axis=1)
+        else:
+            matched_indices = linear_assignment(dist_matrix)
+    else:
+        matched_indices = np.empty(shape=(0, 2))
+
+    unmatched_centers1 = []
+    for d, det in enumerate(centers1):
+        if d not in matched_indices[:, 0]:
+            unmatched_centers1.append(d)
+    
+    unmatched_centers2 = []
+    for t, trk in enumerate(centers2):
+        if t not in matched_indices[:, 1]:
+            unmatched_centers2.append(t)
+
+    # filter out matches with high distance
+    matches = []
+    dist_values = []
+    for m in matched_indices:
+        if dist_matrix[m[0], m[1]] > dist_threshold:
+            unmatched_centers1.append(m[0])
+            unmatched_centers2.append(m[1])
+        else:
+            matches.append(m.reshape(1, 2))
+            dist_values.append(dist_matrix[m[0], m[1]])
+    
+    if len(matches) == 0:
+        matches = np.empty((0, 2), dtype=int)
+    else:
+        matches = np.concatenate(matches, axis=0)
+    
+    return matches, unmatched_centers1, unmatched_centers2, dist_values
