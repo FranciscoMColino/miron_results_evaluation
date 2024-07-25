@@ -36,7 +36,7 @@ def draw_centroid(vis, centroid, color):
     sphere.translate(centroid)
     vis.add_geometry(sphere, reset_bounding_box=False)
 
-def evaluate_visualize_data(config_data, o3d_visualizer):
+def visualize_data(config_data, o3d_visualizer):
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
@@ -116,18 +116,9 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     o3d_visualizer.vis.register_key_callback(32, pause_key_callback)  # Space bar key
     o3d_visualizer.vis.register_key_callback(256, exit_key_callback)  # ESC key
 
+    euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
 
-    iou_thresholds = config_data['IoU_thresholds']
-
-    # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
-    
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4'), ('mod_false_positive_rate', 'f4')]
-    results_collection = np.zeros((len(complete_detection_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
-
-    analysed_frames = 0
-    match_ocurred_per_threshould = np.zeros((len(iou_thresholds),), dtype=int)
-
-    avg_frame_iou_collection = np.zeros((len(complete_detection_timestamps),), dtype='f4')
+    frame_results_dtype = [('precision', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4'), ('recall', 'f4')]
 
     while not exit:
         if run:
@@ -152,50 +143,20 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 continue
             elif synthetic_frame >= len(complete_synthetic_pcds):
                 break
-            
-            detection_assoc_bounds = [get_bbox_extremes(np.asarray(bbox.get_box_points())) for bbox in complete_detection_bboxes[detection_frame]]
-            synthetic_assoc_bounds = [get_bbox_extremes(np.asarray(bbox.get_box_points())) for bbox in complete_synthetic_bboxes[synthetic_frame]]
-
-            """
-                For every IoU threshold, associate the detections with the synthetic data
-                the metrics to be calculated are:
-                - Precision
-                - IoU
-                - Recall
-            """
-
-            
-            frame_results = np.zeros((len(iou_thresholds),), dtype=frame_results_dtype)
-
-            _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
-            avg_frame_iou = np.mean(frame_iou)
-            avg_frame_iou_collection[analysed_frames] = avg_frame_iou
-
-            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
-
-            for i, iou_threshold in enumerate(iou_thresholds):
-                matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
-                true_positives = len(matches)
-                false_positives = len(unmatched_detections)
-                ground_truth_count = len(synthetic_assoc_bounds)
-
-                precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
-                recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-                iou = np.mean(iou_values) if len(iou_values) > 0 else -1
-                mod_false_positive_rate = false_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
-
-                match_ocurred_per_threshould[i] += 1 if true_positives > 0 else 0
-
-                frame_results[i] = (precision, recall, iou, mod_false_positive_rate)
-                # print rounded to 2 decimal places
-                print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}, mFPR: {mod_false_positive_rate:.2f}")
-
-            
-            results_collection[analysed_frames] = frame_results
-            analysed_frames += 1
 
             detection_centroids = [np.asarray(bbox.get_center()) for bbox in complete_detection_bboxes[detection_frame]]
             synthetic_centroids = [np.asarray(bbox.get_center()) for bbox in complete_synthetic_bboxes[synthetic_frame]]
+
+            detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
+            synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
+
+            euclidean_dist_treshold = 0.5
+
+            matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
+
+             # print shapes of the matched and unmatched
+            print(f"Matched detections: {len(matches)}, Unmatched detections: {len(unmatched_detections)}, Unmatched synthetic: {len(unmatched_synthetic)}")
+            print(f"Euclidean dist values: {dist_values}")
 
             o3d_visualizer.reset()
 
@@ -204,7 +165,10 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
-                geometry.color = DETECTION_BBOX_COLOR
+                if i in unmatched_detections:
+                    geometry.color = DETECTION_BBOX_COLOR
+                else:
+                    geometry.color = DETECTION_MATCH_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, centroid in enumerate(detection_centroids):
@@ -215,7 +179,10 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
-                geometry.color = SYNTHETIC_BBOX_COLOR
+                if i in unmatched_synthetic:
+                    geometry.color = SYNTHETIC_BBOX_COLOR
+                else:
+                    geometry.color = SYNTHETIC_MATCH_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, centroid in enumerate(synthetic_centroids):
@@ -240,57 +207,6 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
     o3d_visualizer.vis.destroy_window()
 
-    # strip the zeros from the results collection
-    results_collection = results_collection[:analysed_frames]
-
-    average_precision = np.zeros(len(iou_thresholds))
-    average_recall = np.zeros(len(iou_thresholds))
-    average_iou = np.zeros(len(iou_thresholds))
-    average_mod_false_positive_rate = np.zeros(len(iou_thresholds))
-
-    for frame_results in results_collection:
-        for i, (precision, recall, iou, mod_false_positive_rate) in enumerate(frame_results):
-            average_precision[i] += precision
-            average_recall[i] += recall
-            if iou > 0:
-                average_iou[i] += iou
-            average_mod_false_positive_rate[i] += mod_false_positive_rate
-
-    # Compute the average metrics
-    num_frames = analysed_frames
-    
-    for i in range(len(iou_thresholds)):
-        match_occurs = match_ocurred_per_threshould[i]
-        average_precision[i] /= num_frames
-        average_recall[i] /= num_frames
-        average_iou[i] /= match_occurs
-        average_mod_false_positive_rate[i] /= num_frames
-
-    avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
-    mean_iou = np.mean(avg_frame_iou_collection)
-
-    # Print the average metrics
-    print("Thresholds used:", iou_thresholds)
-    print("Average Precision:", average_precision)
-    print("Average Recall:", average_recall)
-    print("Average IoU:", average_iou)
-    print("Average Mod False Positive Rate:", average_mod_false_positive_rate)
-    print("Average th0 IoU:", mean_iou)
-
-    averages_per_threshold = np.zeros(len(iou_thresholds), dtype=frame_results_dtype)
-
-    for i in range(len(iou_thresholds)):
-        averages_per_threshold[i] = (average_precision[i], average_recall[i], average_iou[i], average_mod_false_positive_rate[i])
-
-    evaluation_results_dtype = [('thresholds' , 'f4', len(iou_thresholds)), ('average', frame_results_dtype, len(iou_thresholds))]
-    final_evaluation_results = np.array((
-        iou_thresholds,
-        averages_per_threshold
-    ), dtype=evaluation_results_dtype)
-
-    print(final_evaluation_results)
-    print(final_evaluation_results.dtype)
-
 
 
 def main():
@@ -307,7 +223,7 @@ def main():
     
     o3d_visualizer = O3dVisualizer()
 
-    evaluate_visualize_data(config_data, o3d_visualizer)
+    visualize_data(config_data, o3d_visualizer)
 
 if __name__ == "__main__":
     main()

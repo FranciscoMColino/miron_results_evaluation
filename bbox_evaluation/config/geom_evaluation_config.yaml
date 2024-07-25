@@ -7,7 +7,7 @@ detection_loader:
 
 synthetic_loader:
   #data_path: '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1' # Path to the synthetic data on the RTX machine
-  data_path: '/home/colino/hawk/synthetic_ground_truth/figure8_transporter_empty-30fps_200frames-rec1' # Path to the synthetic data on the Personal machine
+  data_path: '/home/colino/hawk/synthetic_ground_truth/figure8_transporter_empty-30fps_800frames-rec1' # Path to the synthetic data on the Personal machine
   int_precision: 4
   single_sem_classes: ['transporter1_mesh']
   camera_position: [-10.000000000540384, 5.0018717613276635, 0.21277073854091316]
