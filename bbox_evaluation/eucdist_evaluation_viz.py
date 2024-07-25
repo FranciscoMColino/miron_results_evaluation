@@ -118,7 +118,10 @@ def visualize_data(config_data, o3d_visualizer):
 
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
 
-    frame_results_dtype = [('precision', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4'), ('recall', 'f4')]
+    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4')]
+    results_collection = np.zeros((len(complete_detection_timestamps), len(euclidean_distance_thresholds)), dtype=frame_results_dtype)
+
+    analysed_frames = 0
 
     while not exit:
         if run:
@@ -150,13 +153,45 @@ def visualize_data(config_data, o3d_visualizer):
             detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
             synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
 
-            euclidean_dist_treshold = 0.5
+            frames_results = np.zeros(len(euclidean_distance_thresholds), dtype=frame_results_dtype)
 
-            matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
+            for j, euclidean_dist_treshold in enumerate(euclidean_distance_thresholds):
+                matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
+                true_positives = len(matches)
+                false_positives = len(unmatched_synthetic)
+                ground_truth_count = len(synthetic_2d_centers)
 
-             # print shapes of the matched and unmatched
-            print(f"Matched detections: {len(matches)}, Unmatched detections: {len(unmatched_detections)}, Unmatched synthetic: {len(unmatched_synthetic)}")
-            print(f"Euclidean dist values: {dist_values}")
+                precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
+                recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
+                translation_error = np.mean(dist_values)
+
+                scale_error_iou_values = []
+
+                for match in matches:
+                    detection_bbox = complete_detection_bboxes[detection_frame][match[0]]
+                    synthetic_bbox = complete_synthetic_bboxes[synthetic_frame][match[1]]
+                    detection_extremes = get_bbox_extremes(np.asarray(detection_bbox.get_box_points()))
+                    synthetic_extremes = get_bbox_extremes(np.asarray(synthetic_bbox.get_box_points()))
+                    detection_center = detection_centroids[match[0]]
+                    synthetic_center = synthetic_centroids[match[1]]
+
+                    # translate bboxes to origin
+                    detection_extremes[:3] = np.array(detection_extremes[:3]) - detection_center
+                    detection_extremes[3:] = np.array(detection_extremes[3:]) - detection_center
+                    synthetic_extremes[:3] = np.array(synthetic_extremes[:3]) - synthetic_center
+                    synthetic_extremes[3:] = np.array(synthetic_extremes[3:]) - synthetic_center
+
+                    iou_value = iou_3d(detection_extremes, synthetic_extremes)
+                    scale_error_iou_values.append(iou_value)
+
+                scale_error = 1 - np.mean(scale_error_iou_values)
+
+                frames_results[j] = (precision, recall, translation_error, scale_error)
+
+                print(f"Frame {i}, Threshold {euclidean_dist_treshold}, Precision: {precision}, Recall: {recall}, Translation Error: {translation_error}, Scale Error: {scale_error}")
+
+            results_collection[analysed_frames] = frames_results
+            analysed_frames += 1
 
             o3d_visualizer.reset()
 
@@ -165,10 +200,7 @@ def visualize_data(config_data, o3d_visualizer):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
-                if i in unmatched_detections:
-                    geometry.color = DETECTION_BBOX_COLOR
-                else:
-                    geometry.color = DETECTION_MATCH_COLOR
+                geometry.color = DETECTION_BBOX_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, centroid in enumerate(detection_centroids):
@@ -179,10 +211,7 @@ def visualize_data(config_data, o3d_visualizer):
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
-                if i in unmatched_synthetic:
-                    geometry.color = SYNTHETIC_BBOX_COLOR
-                else:
-                    geometry.color = SYNTHETIC_MATCH_COLOR
+                geometry.color = SYNTHETIC_BBOX_COLOR
                 o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
             for i, centroid in enumerate(synthetic_centroids):
@@ -206,6 +235,44 @@ def visualize_data(config_data, o3d_visualizer):
             time.sleep(1/60)
 
     o3d_visualizer.vis.destroy_window()
+
+    results_collection = results_collection[:analysed_frames]
+
+    average_precision = np.zeros(len(euclidean_distance_thresholds))
+    average_recall = np.zeros(len(euclidean_distance_thresholds))
+    average_translation_error = np.zeros(len(euclidean_distance_thresholds))
+    average_scale_error = np.zeros(len(euclidean_distance_thresholds))
+
+    for frame_results in results_collection:
+        for i, frame_result in enumerate(frame_results):
+            average_precision[i] += frame_result['precision']
+            average_recall[i] += frame_result['recall']
+            average_translation_error[i] += frame_result['translation_error']
+            average_scale_error[i] += frame_result['scale_error']
+
+    average_precision /= analysed_frames
+    average_recall /= analysed_frames
+    average_translation_error /= analysed_frames
+    average_scale_error /= analysed_frames
+    
+    print(f"Thresholds: {euclidean_distance_thresholds}")
+    print(f"Average Precision: {average_precision}")
+    print(f"Average Recall: {average_recall}")
+    print(f"Average Translation Error: {average_translation_error}")
+    print(f"Average Scale Error: {average_scale_error}")
+
+    averages_per_threshold = np.zeros(len(euclidean_distance_thresholds), dtype=frame_results_dtype)
+    for i in range(len(euclidean_distance_thresholds)):
+        averages_per_threshold[i] = (average_precision[i], average_recall[i], average_translation_error[i], average_scale_error[i])
+
+    evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), ('average', frame_results_dtype, len(euclidean_distance_thresholds))]
+    final_evaluation_results = np.array((
+        euclidean_distance_thresholds,
+        averages_per_threshold
+    ), dtype=evaluation_results_dtype)
+    
+    print(f"Final Evaluation Results: {final_evaluation_results}")
+    print(f"Final Evaluation Results dtype: {final_evaluation_results.dtype}")
 
 
 

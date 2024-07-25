@@ -64,6 +64,36 @@ def associate(bboxes1, bboxes2, iou_threshold):
         matches = np.concatenate(matches,axis=0)
     return matches, unmatched_bboxes1, unmatched_bboxes2
 
+def iou_3d(box1, box2):
+    """
+    Computes IoU between two 3D bounding boxes.
+    Each box is represented by [x_min, y_min, z_min, x_max, y_max, z_max]
+    """
+    # Calculate intersection coordinates
+    xx1 = np.maximum(box1[0], box2[0])
+    yy1 = np.maximum(box1[1], box2[1])
+    zz1 = np.maximum(box1[2], box2[2])
+    xx2 = np.minimum(box1[3], box2[3])
+    yy2 = np.minimum(box1[4], box2[4])
+    zz2 = np.minimum(box1[5], box2[5])
+    
+    # Calculate intersection dimensions
+    w = np.maximum(0., xx2 - xx1)
+    h = np.maximum(0., yy2 - yy1)
+    d = np.maximum(0., zz2 - zz1)
+    
+    # Calculate intersection volume
+    intersection_volume = w * h * d
+    
+    # Calculate volumes of individual boxes
+    vol1 = (box1[3] - box1[0]) * (box1[4] - box1[1]) * (box1[5] - box1[2])
+    vol2 = (box2[3] - box2[0]) * (box2[4] - box2[1]) * (box2[5] - box2[2])
+    
+    # Calculate IoU
+    iou = intersection_volume / (vol1 + vol2 - intersection_volume)
+    
+    return iou
+
 def iou_batch_3d(bboxes1, bboxes2):
     """
     Computes IoU between two 3D bounding boxes in the form [x1, y1, z1, x2, y2, z2]

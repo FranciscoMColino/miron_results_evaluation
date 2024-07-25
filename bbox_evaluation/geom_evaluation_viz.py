@@ -270,7 +270,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     mean_iou = np.mean(avg_frame_iou_collection)
 
     # Print the average metrics
-    print("Thresholds used:", iou_thresholds)
+    print("Thresholds:", iou_thresholds)
     print("Average Precision:", average_precision)
     print("Average Recall:", average_recall)
     print("Average IoU:", average_iou)
