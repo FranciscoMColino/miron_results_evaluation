@@ -121,7 +121,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
     
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4'), ('mod_false_positive_rate', 'f4')]
+    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4')]
     results_collection = np.zeros((len(complete_detection_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
 
     analysed_frames = 0
@@ -182,13 +182,12 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
                 recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
                 iou = np.mean(iou_values) if len(iou_values) > 0 else -1
-                mod_false_positive_rate = false_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
 
                 match_ocurred_per_threshould[j] += 1 if true_positives > 0 else 0
 
-                frame_results[j] = (precision, recall, iou, mod_false_positive_rate)
+                frame_results[j] = (precision, recall, iou)
                 # print rounded to 2 decimal places
-                print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}, mFPR: {mod_false_positive_rate:.2f}")
+                print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}")
 
             
             results_collection[analysed_frames] = frame_results
@@ -246,50 +245,44 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     average_precision = np.zeros(len(iou_thresholds))
     average_recall = np.zeros(len(iou_thresholds))
     average_iou = np.zeros(len(iou_thresholds))
-    average_mod_false_positive_rate = np.zeros(len(iou_thresholds))
 
     for frame_results in results_collection:
-        for i, (precision, recall, iou, mod_false_positive_rate) in enumerate(frame_results):
+        for i, (precision, recall, iou) in enumerate(frame_results):
             average_precision[i] += precision
             average_recall[i] += recall
             if iou > 0:
                 average_iou[i] += iou
-            average_mod_false_positive_rate[i] += mod_false_positive_rate
 
-    # Compute the average metrics
-    num_frames = analysed_frames
-    
-    for i in range(len(iou_thresholds)):
-        match_occurs = match_ocurred_per_threshould[i]
-        average_precision[i] /= num_frames
-        average_recall[i] /= num_frames
-        average_iou[i] /= match_occurs
-        average_mod_false_positive_rate[i] /= num_frames
+    average_precision /= analysed_frames
+    average_recall /= analysed_frames
+    average_iou /= analysed_frames
 
     avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
     mean_iou = np.mean(avg_frame_iou_collection)
 
-    # Print the average metrics
-    print("Thresholds:", iou_thresholds)
-    print("Average Precision:", average_precision)
-    print("Average Recall:", average_recall)
-    print("Average IoU:", average_iou)
-    print("Average Mod False Positive Rate:", average_mod_false_positive_rate)
-    print("Average th0 IoU:", mean_iou)
+    evaluation_results_dtype = [
+        ('thresholds' , 'f4', len(iou_thresholds)),
+        ('precision', 'f4', len(iou_thresholds)),
+        ('recall', 'f4', len(iou_thresholds)),
+        ('iou', 'f4', len(iou_thresholds)),
+    ]
 
-    averages_per_threshold = np.zeros(len(iou_thresholds), dtype=frame_results_dtype)
-
-    for i in range(len(iou_thresholds)):
-        averages_per_threshold[i] = (average_precision[i], average_recall[i], average_iou[i], average_mod_false_positive_rate[i])
-
-    evaluation_results_dtype = [('thresholds' , 'f4', len(iou_thresholds)), ('average', frame_results_dtype, len(iou_thresholds))]
     final_evaluation_results = np.array((
         iou_thresholds,
-        averages_per_threshold
+        average_precision,
+        average_recall,
+        average_iou
     ), dtype=evaluation_results_dtype)
 
-    print(final_evaluation_results)
-    print(final_evaluation_results.dtype)
+    def pretty_print_evaluation_results(results):
+        print("\nFinal Evaluation Results:")
+        for name in results.dtype.names:
+            values = results[name]
+            print(f"{name.capitalize()}: {['{:.2f}'.format(val) for val in values]}")
+
+    pretty_print_evaluation_results(final_evaluation_results)
+
+    print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
 
 
 

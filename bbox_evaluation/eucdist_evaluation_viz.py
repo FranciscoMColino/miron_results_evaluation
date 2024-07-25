@@ -155,6 +155,8 @@ def visualize_data(config_data, o3d_visualizer):
 
             frames_results = np.zeros(len(euclidean_distance_thresholds), dtype=frame_results_dtype)
 
+            print(f"\nFrame {analysed_frames}")
+
             for j, euclidean_dist_treshold in enumerate(euclidean_distance_thresholds):
                 matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
                 true_positives = len(matches)
@@ -188,7 +190,7 @@ def visualize_data(config_data, o3d_visualizer):
 
                 frames_results[j] = (precision, recall, translation_error, scale_error)
 
-                print(f"Frame {i}, Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")
+                print(f"Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")
 
             results_collection[analysed_frames] = frames_results
             analysed_frames += 1
@@ -254,12 +256,6 @@ def visualize_data(config_data, o3d_visualizer):
     average_recall /= analysed_frames
     average_translation_error /= analysed_frames
     average_scale_error /= analysed_frames
-    
-    print(f"Thresholds: {[f'{x:.2f}' for x in euclidean_distance_thresholds]}")
-    print(f"Average Precision: {[f'{x:.2f}' for x in average_precision]}")
-    print(f"Average Recall: {[f'{x:.2f}' for x in average_recall]}")
-    print(f"Average Translation Error: {[f'{x:.2f}' for x in average_translation_error]}")
-    print(f"Average Scale Error: {[f'{x:.2f}' for x in average_scale_error]}")
 
     evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), 
                                 ('average_precision', 'f4', len(euclidean_distance_thresholds)),
@@ -274,8 +270,16 @@ def visualize_data(config_data, o3d_visualizer):
         average_scale_error
     ), dtype=evaluation_results_dtype)
 
-    print(f"Final Evaluation Results: {final_evaluation_results}")
-    print(f"Final Evaluation Results dtype: {final_evaluation_results.dtype}")
+    def pretty_print_evaluation_results(results):
+        print("\nFinal Evaluation Results:")
+        for name in results.dtype.names:
+            values = results[name]
+            print(f"{name.capitalize()}: {['{:.2f}'.format(val) for val in values]}")
+
+    pretty_print_evaluation_results(final_evaluation_results)
+
+    print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
+
 
 
 
