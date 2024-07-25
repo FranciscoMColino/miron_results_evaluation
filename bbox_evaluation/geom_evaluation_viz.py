@@ -173,7 +173,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
             print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
 
-            for i, iou_threshold in enumerate(iou_thresholds):
+            for j, iou_threshold in enumerate(iou_thresholds):
                 matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
                 true_positives = len(matches)
                 false_positives = len(unmatched_detections)
@@ -184,9 +184,9 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 iou = np.mean(iou_values) if len(iou_values) > 0 else -1
                 mod_false_positive_rate = false_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
 
-                match_ocurred_per_threshould[i] += 1 if true_positives > 0 else 0
+                match_ocurred_per_threshould[j] += 1 if true_positives > 0 else 0
 
-                frame_results[i] = (precision, recall, iou, mod_false_positive_rate)
+                frame_results[j] = (precision, recall, iou, mod_false_positive_rate)
                 # print rounded to 2 decimal places
                 print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}, mFPR: {mod_false_positive_rate:.2f}")
 
