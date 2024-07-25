@@ -1,4 +1,4 @@
-euclidean_distance_thresholds: [0.35, 0.5, 0.75, 1.0]
+euclidean_distance_thresholds: [0.25, 0.35, 0.5, 0.75, 1.0]
 
 detection_loader:
   #data_path: '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2' # Path to the detection data on the RTX machine

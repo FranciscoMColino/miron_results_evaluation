@@ -188,7 +188,7 @@ def visualize_data(config_data, o3d_visualizer):
 
                 frames_results[j] = (precision, recall, translation_error, scale_error)
 
-                print(f"Frame {i}, Threshold {euclidean_dist_treshold}, Precision: {precision}, Recall: {recall}, Translation Error: {translation_error}, Scale Error: {scale_error}")
+                print(f"Frame {i}, Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")
 
             results_collection[analysed_frames] = frames_results
             analysed_frames += 1
@@ -255,22 +255,25 @@ def visualize_data(config_data, o3d_visualizer):
     average_translation_error /= analysed_frames
     average_scale_error /= analysed_frames
     
-    print(f"Thresholds: {euclidean_distance_thresholds}")
-    print(f"Average Precision: {average_precision}")
-    print(f"Average Recall: {average_recall}")
-    print(f"Average Translation Error: {average_translation_error}")
-    print(f"Average Scale Error: {average_scale_error}")
+    print(f"Thresholds: {[f'{x:.2f}' for x in euclidean_distance_thresholds]}")
+    print(f"Average Precision: {[f'{x:.2f}' for x in average_precision]}")
+    print(f"Average Recall: {[f'{x:.2f}' for x in average_recall]}")
+    print(f"Average Translation Error: {[f'{x:.2f}' for x in average_translation_error]}")
+    print(f"Average Scale Error: {[f'{x:.2f}' for x in average_scale_error]}")
 
-    averages_per_threshold = np.zeros(len(euclidean_distance_thresholds), dtype=frame_results_dtype)
-    for i in range(len(euclidean_distance_thresholds)):
-        averages_per_threshold[i] = (average_precision[i], average_recall[i], average_translation_error[i], average_scale_error[i])
-
-    evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), ('average', frame_results_dtype, len(euclidean_distance_thresholds))]
+    evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), 
+                                ('average_precision', 'f4', len(euclidean_distance_thresholds)),
+                                ('average_recall', 'f4', len(euclidean_distance_thresholds)),
+                                ('average_translation_error', 'f4', len(euclidean_distance_thresholds)),
+                                ('average_scale_error', 'f4', len(euclidean_distance_thresholds))]
     final_evaluation_results = np.array((
         euclidean_distance_thresholds,
-        averages_per_threshold
+        average_precision,
+        average_recall,
+        average_translation_error,
+        average_scale_error
     ), dtype=evaluation_results_dtype)
-    
+
     print(f"Final Evaluation Results: {final_evaluation_results}")
     print(f"Final Evaluation Results dtype: {final_evaluation_results.dtype}")
 
