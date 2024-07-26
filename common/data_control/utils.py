@@ -38,7 +38,7 @@ def get_translation_and_rotation_from_camera_properties(camera_position, camera_
     ])
 
     # rotation over Z for angle
-    rotation_angle = 90
+    rotation_angle = -90
     rotation_matrix = np.array([
         [np.cos(np.radians(rotation_angle)), -np.sin(np.radians(rotation_angle)), 0],
         [np.sin(np.radians(rotation_angle)), np.cos(np.radians(rotation_angle)), 0],
@@ -47,7 +47,9 @@ def get_translation_and_rotation_from_camera_properties(camera_position, camera_
 
     # Define the translation vector (3x1)
     translation_vector = -camera_position
-    rotation_matrix = camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
+    #rotation_matrix = camera_rotation @ rotation_x_minus_90 @ rotation_matrix # use for LeftCamera rotation
+    rotation_matrix = camera_rotation @ rotation_x_minus_90.T @ rotation_matrix.T # use for ZED_X rotation
+
 
     return translation_vector, rotation_matrix
 
