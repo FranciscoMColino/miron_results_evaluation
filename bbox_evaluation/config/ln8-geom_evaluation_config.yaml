@@ -1,0 +1,30 @@
+IoU_thresholds: [0.1, 0.2, 0.3, 0.4]
+
+detection_loader:
+  #data_path: '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2' # Path to the detection data on the RTX machine
+  data_path: '/home/colino/hawk/detection_data/ermis_detection/tests/new_height_test_1-pdf8.0_pfr30.0_dmNEURALPLUS_pcf30.0_dc25_dtf99' # Path to the detection data on the Personal machine
+  int_precision: 5
+
+synthetic_loader:
+  #data_path: '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1' # Path to the synthetic data on the RTX machine
+  data_path: '/home/colino/hawk/synthetic_ground_truth/tests/MultiBot2-30fps_800frames-rec2' # Path to the synthetic data on the Personal machine
+  int_precision: 4
+  multi_sem_classes: ['wetfloorsign']
+  camera_position: [-9.9, 4.9, 0.5]
+  camera_rotation: [ 
+    [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], 
+    [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], 
+    [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
+
+
+  #[ 
+  #  [-1.0000000000000002, -7.885984946898293e-16, -3.445092848397667e-16], 
+  #  [-5.665538897647981e-16, -9.957992501029616e-17, 1.0000000000000002], 
+  #  [-5.66553889764798e-16, 1.0000000000000002, 3.2162452993532727e-16] ]
+  # 
+
+alignment_config:
+  detection_frame_offset: 0
+  synthetic_frame_offset: 7
+  synthetic_fps: 30
+  playback_speed: 1.0 # 1.0 for real-time playback, used for better visualization

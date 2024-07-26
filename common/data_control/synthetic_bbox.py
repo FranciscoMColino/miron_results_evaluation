@@ -5,15 +5,15 @@ import open3d as o3d
 
 class SyntheticBbox():
     def __init__(self, data_path, int_precision=4, 
-                 singl_sem_classes=None, translation_vector=None, rotation_matrix=None):
+                 multi_sem_classes=None, translation_vector=None, rotation_matrix=None):
         self.data_path = data_path
         self.int_precision = int_precision
         self.file_indices = []
         self.data_range = (None, None)
         self.complete_bbox_points = None
         self.complete_labels = None
-        self.singl_sem_classes = singl_sem_classes
-        self.multi_sem_classes = None
+        self.single_sem_classes = None
+        self.multi_sem_classes = multi_sem_classes
         self.translation_vector = translation_vector
         self.rotation_matrix = rotation_matrix
         
@@ -49,7 +49,7 @@ class SyntheticBbox():
                 for label in labels.values():
                     all_labels.add(label['class'])
 
-        self.multi_sem_classes = list(all_labels - set(self.singl_sem_classes))
+        self.single_sem_classes = list(all_labels - set(self.multi_sem_classes))
                 
     def load_data(self):
         for i in range(self.data_range[0], self.data_range[1] + 1):
@@ -59,7 +59,7 @@ class SyntheticBbox():
             local_bbox_points = []
             
             single_sem_points = {}
-            for class_name in self.singl_sem_classes:
+            for class_name in self.single_sem_classes:
                 single_sem_points[class_name] = [] # list of points
                 
             multi_sem_points = {}
@@ -94,7 +94,7 @@ class SyntheticBbox():
                 pcd.rotate(self.rotation_matrix, center=(0, 0, 0))
                 points = np.asarray(pcd.points)
                 
-                if class_name in self.singl_sem_classes:
+                if class_name in self.single_sem_classes:
                     single_sem_points[class_name].extend(points)
                 elif class_name in self.multi_sem_classes:
                     multi_sem_points[class_name].append(points)
