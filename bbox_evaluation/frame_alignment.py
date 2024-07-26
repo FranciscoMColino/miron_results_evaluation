@@ -30,7 +30,7 @@ def visualize_data(config_data, o3d_visualizer):
 
     synthetic_data_path = config_data['synthetic_loader']['data_path']
     synthetic_int_precision = config_data['synthetic_loader']['int_precision']
-    synthetic_single_sem_classes = config_data['synthetic_loader']['single_sem_classes']
+    synthetic_multi_sem_classes = config_data['synthetic_loader']['multi_sem_classes']
     synthetic_camera_position = np.array(config_data['synthetic_loader']['camera_position'])
     synthetic_camera_rotation = np.array(config_data['synthetic_loader']['camera_rotation'])
     
@@ -43,7 +43,7 @@ def visualize_data(config_data, o3d_visualizer):
     
     translation_vector, rotation_matrix = get_translation_and_rotation_from_camera_properties(synthetic_camera_position, synthetic_camera_rotation)
                 
-    synthetic_bbox = SyntheticBbox(synthetic_data_path, singl_sem_classes=synthetic_single_sem_classes, int_precision=synthetic_int_precision,
+    synthetic_bbox = SyntheticBbox(synthetic_data_path, multi_sem_classes=synthetic_multi_sem_classes, int_precision=synthetic_int_precision,
                                     translation_vector=translation_vector, rotation_matrix=rotation_matrix)
     synthetic_bbox.setup()
     synthetic_bbox.load_labels()
