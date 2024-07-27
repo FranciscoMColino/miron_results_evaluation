@@ -71,5 +71,7 @@ class Detection3dBbox():
         for i in range(detection_data_range[0], detection_data_range[1] + 1):
             self.complete_2d_bboxes[i - detection_data_range[0]] = []
             for bbox_points in self.complete_bboxes[i - detection_data_range[0]]:
-                bbox_2d = bbox_points[:, :2]
+                min_x, max_x = np.min(bbox_points[:, 0]), np.max(bbox_points[:, 0])
+                min_y, max_y = np.min(bbox_points[:, 1]), np.max(bbox_points[:, 1])
+                bbox_2d = np.array([[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]])
                 self.complete_2d_bboxes[i - detection_data_range[0]].append(bbox_2d)

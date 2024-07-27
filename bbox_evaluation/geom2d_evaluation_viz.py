@@ -27,7 +27,7 @@ def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
     min_coords = np.min(bbox, axis=0)
     max_coords = np.max(bbox, axis=0)
-    return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
+    return np.concatenate((min_coords, max_coords))
 
 def draw_centroid(vis, centroid, color):
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
@@ -48,6 +48,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     detection_bbox.setup()
     detection_bbox.load_data()
     detection_bbox.compute_bboxes()
+    detection_bbox.convert_to_2d_boxes()
     detection_data_range = detection_bbox.data_range
 
     # Load synthetic data
@@ -73,6 +74,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
     synthetic_bbox.compute_bboxes()
+    synthetic_bbox.convert_to_2d_boxes()
         
     ### Global parameters
 
@@ -152,8 +154,8 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             elif synthetic_frame >= len(synthetic_bbox.complete_points):
                 break
             
-            detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
-            synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
+            detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_2d_bboxes[detection_frame]]
+            synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]]
 
             """
                 For every IoU threshold, associate the detections with the synthetic data
@@ -166,14 +168,8 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             
             frame_results = np.zeros((len(iou_thresholds),), dtype=frame_results_dtype)
 
-            _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
-            avg_frame_iou = np.mean(frame_iou)
-            avg_frame_iou_collection[analysed_frames] = avg_frame_iou
-
-            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
-
             for j, iou_threshold in enumerate(iou_thresholds):
-                matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
+                matches, unmatched_detections, unmatched_synthetic, iou_values = associate_2d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
                 true_positives = len(matches)
                 false_positives = len(unmatched_detections)
                 ground_truth_count = len(synthetic_assoc_bounds)
@@ -192,11 +188,13 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             results_collection[analysed_frames] = frame_results
             analysed_frames += 1
 
-            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
-            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
+            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_2d_bboxes[detection_frame]]
+            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]]
 
             o3d_visualizer.reset()
 
+            VISUALIZATION_BOX_MIN_Z = -0.5
+            VISUALIZATION_BOX_MAX_Z = 1
 
             for points in detection_bbox.complete_points[detection_frame]:
                 pcd = o3d.geometry.PointCloud()
@@ -210,7 +208,12 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
                 o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
 
-            for bbox_points in detection_bbox.complete_bboxes[detection_frame]:
+            for bbox_points in detection_bbox.complete_2d_bboxes[detection_frame]:
+                bbox_points = np.array(bbox_points)
+                bbox_points = np.repeat(bbox_points, 2, axis=0)
+                # concatenate min and max z values, there is no z information in the 2d bboxes
+                bbox_points = np.concatenate((bbox_points, np.array([VISUALIZATION_BOX_MIN_Z, VISUALIZATION_BOX_MAX_Z] * 4).reshape(-1, 1)), axis=1)
+
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(bbox_points)
                 pcd.paint_uniform_color(DETECTION_POINT_COLOR)
@@ -219,7 +222,10 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 bbox.color = DETECTION_BBOX_COLOR
                 o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
 
-            for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]:
+            for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]:
+                bbox_points = np.array(bbox_points)
+                bbox_points = np.repeat(bbox_points, 2, axis=0)
+                bbox_points = np.concatenate((bbox_points, np.array([VISUALIZATION_BOX_MIN_Z, VISUALIZATION_BOX_MAX_Z] * 4).reshape(-1, 1)), axis=1)
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(bbox_points)
                 pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
@@ -229,9 +235,13 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
 
             for centroid in detection_centroids:
+                # add z component to centroid
+                centroid = np.append(centroid, VISUALIZATION_BOX_MAX_Z)
                 draw_centroid(o3d_visualizer.vis, centroid, DETECTION_CENTER_COLOR)
 
             for centroid in synthetic_centroids:
+                # add z component to centroid
+                centroid = np.append(centroid, VISUALIZATION_BOX_MAX_Z)
                 draw_centroid(o3d_visualizer.vis, centroid, SYNTHETIC_CENTER_COLOR)
 
             o3d_visualizer.render()
