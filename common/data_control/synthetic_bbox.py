@@ -10,8 +10,9 @@ class SyntheticBbox():
         self.int_precision = int_precision
         self.file_indices = []
         self.data_range = (None, None)
-        self.complete_bbox_points = None
+        self.complete_points = None
         self.complete_labels = None
+        self.complete_bboxes = None
         self.single_sem_classes = None
         self.multi_sem_classes = multi_sem_classes
         self.translation_vector = translation_vector
@@ -28,7 +29,8 @@ class SyntheticBbox():
         if self.file_indices:
             self.data_range = (min(self.file_indices), max(self.file_indices))
         
-        self.complete_bbox_points = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
+        self.complete_points = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
+        self.complete_bboxes = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
         self.complete_labels = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=dict)
         
     def load_labels(self):
@@ -92,7 +94,7 @@ class SyntheticBbox():
                 pcd.transform(np.array(transform).astype(np.float64))
                 pcd.translate(self.translation_vector)
                 pcd.rotate(self.rotation_matrix, center=(0, 0, 0))
-                points = np.asarray(pcd.points)
+                points = np.asarray(pcd.points).astype(np.float64)
                 
                 if class_name in self.single_sem_classes:
                     single_sem_points[class_name].extend(points)
@@ -104,6 +106,24 @@ class SyntheticBbox():
             
             for class_name, points_list in multi_sem_points.items():
                 local_bbox_points.extend(points_list)
-            
-            self.complete_bbox_points[i - self.data_range[0]] = local_bbox_points
+
+            self.complete_points[i - self.data_range[0]] = local_bbox_points
+
+
+    def compute_bboxes(self):
+
+        synthetic_data_range = self.data_range
+
+        self.complete_bboxes = np.empty(synthetic_data_range[1] - synthetic_data_range[0] + 1, dtype=list)
+
+        for i in range(synthetic_data_range[0], synthetic_data_range[1] + 1):
+            self.complete_bboxes[i - synthetic_data_range[0]] = []
+
+            for points in self.complete_points[i - synthetic_data_range[0]]:
+                points = np.array(points).astype(np.float64)
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox_points = np.asarray(bbox.get_box_points()).astype(np.float64)
+                self.complete_bboxes[i - synthetic_data_range[0]].append(bbox_points)
             

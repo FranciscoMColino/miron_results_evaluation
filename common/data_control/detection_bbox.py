@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import open3d as o3d
 
 class Detection3dBbox():
     def __init__(self, data_path, int_precision=5):
@@ -7,7 +8,8 @@ class Detection3dBbox():
         self.int_precision = int_precision
         self.file_indices = []
         self.data_range = (None, None)
-        self.complete_bbox_points = None
+        self.complete_points = None
+        self.complete_bboxes = None
         self.complete_timestamps = None
         
     def setup(self):
@@ -20,7 +22,8 @@ class Detection3dBbox():
         if self.file_indices:
             self.data_range = (min(self.file_indices), max(self.file_indices))
         
-        self.complete_bbox_points = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
+        self.complete_points = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
+        self.complete_bboxes = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=list)
         self.complete_timestamps = np.empty(self.data_range[1] - self.data_range[0] + 1, dtype=dict)
         
     def load_data(self):
@@ -36,13 +39,29 @@ class Detection3dBbox():
                 bbox_points = detections['points'].astype(np.float64) # 2
                 bbox_centroid = detections['centroid'].astype(np.float64) # 3, not used
                 bbox_transform = detections['transform'].astype(np.float64) # 4, not used
-                local_bbox_points.append(bbox_points)
+                local_bbox_points.append(np.array(bbox_points).astype(np.float64))
                 
-            self.complete_bbox_points[i - self.data_range[0]] = local_bbox_points
+            self.complete_points[i - self.data_range[0]] = local_bbox_points
             self.complete_timestamps[i - self.data_range[0]] = {
                 'seconds': bboxes_data_np['seconds'],
                 'nanoseconds': bboxes_data_np['nanoseconds']
             }
-        
+
+    def compute_bboxes(self):
+        detection_data_range = self.data_range
+
+        self.complete_bboxes = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=list)
+
+        for i in range(detection_data_range[0], detection_data_range[1] + 1):
+            
+            self.complete_bboxes[i - detection_data_range[0]] = []
+            
+            for points in self.complete_points[i - detection_data_range[0]]:
+                points = np.array(points).astype(np.float64)
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox_points = np.asarray(bbox.get_box_points()).astype(np.float64)
+                self.complete_bboxes[i - detection_data_range[0]].append(bbox_points)
     
         
