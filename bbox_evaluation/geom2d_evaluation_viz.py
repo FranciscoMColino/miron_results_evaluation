@@ -33,10 +33,12 @@ def draw_centroid(vis, centroid, color):
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
     sphere.compute_vertex_normals()
     sphere.paint_uniform_color(color)
+    print(f"Drawing centroid at {centroid}")
     sphere.translate(centroid)
     vis.add_geometry(sphere, reset_bounding_box=False)
 
 def evaluate_visualize_data(config_data, o3d_visualizer):
+
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
@@ -45,10 +47,8 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     detection_bbox = Detection3dBbox(detection_data_path, int_precision=detection_int_precision)
     detection_bbox.setup()
     detection_bbox.load_data()
-
+    detection_bbox.compute_bboxes()
     detection_data_range = detection_bbox.data_range
-
-    complete_detection_pcds, complete_detection_bboxes, complete_detection_timestamps = extract_complete_data_from_detection_bboxes(detection_bbox)
 
     # Load synthetic data
 
@@ -72,8 +72,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     synthetic_bbox.setup()
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
-
-    complete_synthetic_pcds, complete_synthetic_bboxes = extract_complete_data_from_synthetic_bboxes(synthetic_bbox)
+    synthetic_bbox.compute_bboxes()
         
     ### Global parameters
 
@@ -85,14 +84,14 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
         raise ValueError("Frame offsets must be positive")
     
     # estimate fps from first and last timestamps and number of frames
-    detection_fps = estimate_detection_frame_rate(complete_detection_timestamps)
+    detection_fps = estimate_detection_frame_rate(detection_bbox.complete_timestamps)
     print(f"Estimated FPS: {detection_fps}")
         
     ### Visualization
 
     o3d_visualizer.setup()
 
-    initial_detection_timestamp = complete_detection_timestamps[0]
+    initial_detection_timestamp = detection_bbox.complete_timestamps[0]
     data_range = detection_data_range
     range_start = detection_data_range[0] + detection_frame_offset
     range_end = detection_data_range[1]
@@ -122,12 +121,12 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
     
     frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4')]
-    results_collection = np.zeros((len(complete_detection_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
+    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
 
     analysed_frames = 0
     match_ocurred_per_threshould = np.zeros((len(iou_thresholds),), dtype=int)
 
-    avg_frame_iou_collection = np.zeros((len(complete_detection_timestamps),), dtype='f4')
+    avg_frame_iou_collection = np.zeros((len(detection_bbox.complete_timestamps),), dtype='f4')
 
     while not exit:
         if run:
@@ -140,7 +139,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             if exit or run:
                 break
 
-            current_detection_timestamp = complete_detection_timestamps[i - range_start]
+            current_detection_timestamp = detection_bbox.complete_timestamps[i - range_start]
             delta_seconds = current_detection_timestamp['seconds'] - initial_detection_timestamp['seconds']
             delta_nanoseconds = current_detection_timestamp['nanoseconds'] - initial_detection_timestamp['nanoseconds']
 
@@ -150,11 +149,11 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
             if synthetic_frame < 0:
                 continue
-            elif synthetic_frame >= len(complete_synthetic_pcds):
+            elif synthetic_frame >= len(synthetic_bbox.complete_points):
                 break
             
-            detection_assoc_bounds = [get_bbox_extremes(np.asarray(bbox.get_box_points())) for bbox in complete_detection_bboxes[detection_frame]]
-            synthetic_assoc_bounds = [get_bbox_extremes(np.asarray(bbox.get_box_points())) for bbox in complete_synthetic_bboxes[synthetic_frame]]
+            detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
+            synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
             """
                 For every IoU threshold, associate the detections with the synthetic data
@@ -193,31 +192,46 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             results_collection[analysed_frames] = frame_results
             analysed_frames += 1
 
-            detection_centroids = [np.asarray(bbox.get_center()) for bbox in complete_detection_bboxes[detection_frame]]
-            synthetic_centroids = [np.asarray(bbox.get_center()) for bbox in complete_synthetic_bboxes[synthetic_frame]]
+            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
+            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
             o3d_visualizer.reset()
 
-            for i, geometry in enumerate(complete_detection_pcds[detection_frame]):
-                geometry.paint_uniform_color(DETECTION_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
 
-            for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
-                geometry.color = DETECTION_BBOX_COLOR
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+            for points in detection_bbox.complete_points[detection_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                pcd.paint_uniform_color(DETECTION_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
 
-            for i, centroid in enumerate(detection_centroids):
+            for points in synthetic_bbox.complete_points[synthetic_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
+
+            for bbox_points in detection_bbox.complete_bboxes[detection_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(bbox_points)
+                pcd.paint_uniform_color(DETECTION_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox.color = DETECTION_BBOX_COLOR
+                o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
+
+            for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(bbox_points)
+                pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox.color = SYNTHETIC_BBOX_COLOR
+                o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
+
+            for centroid in detection_centroids:
                 draw_centroid(o3d_visualizer.vis, centroid, DETECTION_CENTER_COLOR)
 
-            for i, geometry in enumerate(complete_synthetic_pcds[synthetic_frame]):
-                geometry.paint_uniform_color(SYNTHETIC_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-
-            for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
-                geometry.color = SYNTHETIC_BBOX_COLOR
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-
-            for i, centroid in enumerate(synthetic_centroids):
+            for centroid in synthetic_centroids:
                 draw_centroid(o3d_visualizer.vis, centroid, SYNTHETIC_CENTER_COLOR)
 
             o3d_visualizer.render()

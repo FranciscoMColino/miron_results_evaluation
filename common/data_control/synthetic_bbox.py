@@ -126,4 +126,14 @@ class SyntheticBbox():
                 bbox = pcd.get_axis_aligned_bounding_box()
                 bbox_points = np.asarray(bbox.get_box_points()).astype(np.float64)
                 self.complete_bboxes[i - synthetic_data_range[0]].append(bbox_points)
+
+    def convert_to_2d_boxes(self):
+        synthetic_data_range = self.data_range
+        self.complete_2d_bboxes = np.empty(synthetic_data_range[1] - synthetic_data_range[0] + 1, dtype=list)
+
+        for i in range(synthetic_data_range[0], synthetic_data_range[1] + 1):
+            self.complete_2d_bboxes[i - synthetic_data_range[0]] = []
+            for bbox_points in self.complete_bboxes[i - synthetic_data_range[0]]:
+                bbox_2d = bbox_points[:, :2]
+                self.complete_2d_bboxes[i - synthetic_data_range[0]].append(bbox_2d)
             
