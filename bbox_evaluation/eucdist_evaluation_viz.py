@@ -8,7 +8,7 @@ import argparse
 
 from common.o3d_visualizer import O3dVisualizer
 from common.data_control.synthetic_bbox import SyntheticBbox
-from common.data_control.detection_bbox import DetectionBbox
+from common.data_control.detection_bbox import Detection3dBbox
 from common.data_control.utils import *
 
 from bbox_evaluation.association import *
@@ -36,19 +36,17 @@ def draw_centroid(vis, centroid, color):
     sphere.translate(centroid)
     vis.add_geometry(sphere, reset_bounding_box=False)
 
-def visualize_data(config_data, o3d_visualizer):
+def evaluate_visualize_data(config_data, o3d_visualizer):
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
     detection_int_precision = config_data['detection_loader']['int_precision']
 
-    detection_bbox = DetectionBbox(detection_data_path, int_precision=detection_int_precision)
+    detection_bbox = Detection3dBbox(detection_data_path, int_precision=detection_int_precision)
     detection_bbox.setup()
     detection_bbox.load_data()
-
+    detection_bbox.compute_bboxes()
     detection_data_range = detection_bbox.data_range
-
-    complete_detection_pcds, complete_detection_bboxes, complete_detection_timestamps = extract_complete_data_from_detection_bboxes(detection_bbox)
 
     # Load synthetic data
 
@@ -72,9 +70,8 @@ def visualize_data(config_data, o3d_visualizer):
     synthetic_bbox.setup()
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
+    synthetic_bbox.compute_bboxes()
 
-    complete_synthetic_pcds, complete_synthetic_bboxes = extract_complete_data_from_synthetic_bboxes(synthetic_bbox)
-        
     ### Global parameters
 
     detection_frame_offset = config_data['alignment_config']['detection_frame_offset']
@@ -85,14 +82,14 @@ def visualize_data(config_data, o3d_visualizer):
         raise ValueError("Frame offsets must be positive")
     
     # estimate fps from first and last timestamps and number of frames
-    detection_fps = estimate_detection_frame_rate(complete_detection_timestamps)
+    detection_fps = estimate_detection_frame_rate(detection_bbox.complete_timestamps)
     print(f"Estimated FPS: {detection_fps}")
         
     ### Visualization
 
     o3d_visualizer.setup()
 
-    initial_detection_timestamp = complete_detection_timestamps[0]
+    initial_detection_timestamp = detection_bbox.complete_timestamps[0]
     data_range = detection_data_range
     range_start = detection_data_range[0] + detection_frame_offset
     range_end = detection_data_range[1]
@@ -119,7 +116,7 @@ def visualize_data(config_data, o3d_visualizer):
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
 
     frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4')]
-    results_collection = np.zeros((len(complete_detection_timestamps), len(euclidean_distance_thresholds)), dtype=frame_results_dtype)
+    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(euclidean_distance_thresholds)), dtype=frame_results_dtype)
 
     analysed_frames = 0
 
@@ -134,7 +131,7 @@ def visualize_data(config_data, o3d_visualizer):
             if exit or run:
                 break
 
-            current_detection_timestamp = complete_detection_timestamps[i - range_start]
+            current_detection_timestamp = detection_bbox.complete_timestamps[i - range_start]
             delta_seconds = current_detection_timestamp['seconds'] - initial_detection_timestamp['seconds']
             delta_nanoseconds = current_detection_timestamp['nanoseconds'] - initial_detection_timestamp['nanoseconds']
 
@@ -144,11 +141,11 @@ def visualize_data(config_data, o3d_visualizer):
 
             if synthetic_frame < 0:
                 continue
-            elif synthetic_frame >= len(complete_synthetic_pcds):
+            elif synthetic_frame >= len(synthetic_bbox.complete_points):
                 break
 
-            detection_centroids = [np.asarray(bbox.get_center()) for bbox in complete_detection_bboxes[detection_frame]]
-            synthetic_centroids = [np.asarray(bbox.get_center()) for bbox in complete_synthetic_bboxes[synthetic_frame]]
+            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
+            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
             detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
             synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
@@ -170,10 +167,10 @@ def visualize_data(config_data, o3d_visualizer):
                 scale_error_iou_values = []
 
                 for match in matches:
-                    detection_bbox = complete_detection_bboxes[detection_frame][match[0]]
-                    synthetic_bbox = complete_synthetic_bboxes[synthetic_frame][match[1]]
-                    detection_extremes = get_bbox_extremes(np.asarray(detection_bbox.get_box_points()))
-                    synthetic_extremes = get_bbox_extremes(np.asarray(synthetic_bbox.get_box_points()))
+                    detection_bbox_points = detection_bbox.complete_bboxes[detection_frame][match[0]]
+                    synthetic_bbox_points = synthetic_bbox.complete_bboxes[synthetic_frame][match[1]]
+                    detection_extremes = get_bbox_extremes(detection_bbox_points)
+                    synthetic_extremes = get_bbox_extremes(synthetic_bbox_points)
                     detection_center = detection_centroids[match[0]]
                     synthetic_center = synthetic_centroids[match[1]]
 
@@ -197,26 +194,40 @@ def visualize_data(config_data, o3d_visualizer):
 
             o3d_visualizer.reset()
 
-            for i, geometry in enumerate(complete_detection_pcds[detection_frame]):
-                geometry.paint_uniform_color(DETECTION_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+            for points in detection_bbox.complete_points[detection_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                pcd.paint_uniform_color(DETECTION_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
 
-            for i, geometry in enumerate(complete_detection_bboxes[detection_frame]):
-                geometry.color = DETECTION_BBOX_COLOR
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
+            for points in synthetic_bbox.complete_points[synthetic_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(points)
+                pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
 
-            for i, centroid in enumerate(detection_centroids):
+            for bbox_points in detection_bbox.complete_bboxes[detection_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(bbox_points)
+                pcd.paint_uniform_color(DETECTION_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox.color = DETECTION_BBOX_COLOR
+                o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
+
+            for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]:
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(bbox_points)
+                pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
+                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
+                bbox = pcd.get_axis_aligned_bounding_box()
+                bbox.color = SYNTHETIC_BBOX_COLOR
+                o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
+
+            for centroid in detection_centroids:
                 draw_centroid(o3d_visualizer.vis, centroid, DETECTION_CENTER_COLOR)
 
-            for i, geometry in enumerate(complete_synthetic_pcds[synthetic_frame]):
-                geometry.paint_uniform_color(SYNTHETIC_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-
-            for i, geometry in enumerate(complete_synthetic_bboxes[synthetic_frame]):
-                geometry.color = SYNTHETIC_BBOX_COLOR
-                o3d_visualizer.vis.add_geometry(geometry, reset_bounding_box=False)
-
-            for i, centroid in enumerate(synthetic_centroids):
+            for centroid in synthetic_centroids:
                 draw_centroid(o3d_visualizer.vis, centroid, SYNTHETIC_CENTER_COLOR)
 
             o3d_visualizer.render()
@@ -297,7 +308,7 @@ def main():
     
     o3d_visualizer = O3dVisualizer()
 
-    visualize_data(config_data, o3d_visualizer)
+    evaluate_visualize_data(config_data, o3d_visualizer)
 
 if __name__ == "__main__":
     main()
