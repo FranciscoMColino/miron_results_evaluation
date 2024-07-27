@@ -1,7 +1,7 @@
 import numpy as np
 import open3d as o3d
 
-def extract_complete_data_from_detection_bboxes(detector_bbox):
+def extract_complete_data_from_detection_bboxes(detector_bbox, override_z_values=None):
     detection_data_range = detector_bbox.data_range
 
     complete_detection_pcds = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=list)
@@ -15,6 +15,7 @@ def extract_complete_data_from_detection_bboxes(detector_bbox):
         
         for bbox_points in detector_bbox.complete_bbox_points[i - detection_data_range[0]]:
             pcd = o3d.geometry.PointCloud()
+
             pcd.points = o3d.utility.Vector3dVector(bbox_points)
             pcd.paint_uniform_color([1, 0, 1])
             local_pcds.append(pcd)

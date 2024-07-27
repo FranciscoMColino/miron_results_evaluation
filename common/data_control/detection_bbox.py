@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-class DetectionBbox():
+class Detection3dBbox():
     def __init__(self, data_path, int_precision=5):
         self.data_path = data_path
         self.int_precision = int_precision

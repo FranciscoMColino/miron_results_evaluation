@@ -8,7 +8,7 @@ import argparse
 
 from common.o3d_visualizer import O3dVisualizer
 from common.data_control.synthetic_bbox import SyntheticBbox
-from common.data_control.detection_bbox import DetectionBbox
+from common.data_control.detection_bbox import Detection3dBbox
 from common.data_control.utils import *
 
 from bbox_evaluation.association import *
@@ -37,12 +37,13 @@ def draw_centroid(vis, centroid, color):
     vis.add_geometry(sphere, reset_bounding_box=False)
 
 def evaluate_visualize_data(config_data, o3d_visualizer):
+
     ### Load detection data
 
     detection_data_path = config_data['detection_loader']['data_path']
     detection_int_precision = config_data['detection_loader']['int_precision']
 
-    detection_bbox = DetectionBbox(detection_data_path, int_precision=detection_int_precision)
+    detection_bbox = Detection3dBbox(detection_data_path, int_precision=detection_int_precision)
     detection_bbox.setup()
     detection_bbox.load_data()
 
