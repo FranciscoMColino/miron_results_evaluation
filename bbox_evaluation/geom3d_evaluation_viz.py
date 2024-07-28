@@ -5,6 +5,7 @@ import numpy as np
 import open3d as o3d
 import time
 import argparse
+import math
 
 from common.o3d_visualizer import O3dVisualizer
 from common.data_control.synthetic_bbox import SyntheticBbox
@@ -33,7 +34,6 @@ def draw_centroid(vis, centroid, color):
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
     sphere.compute_vertex_normals()
     sphere.paint_uniform_color(color)
-    print(f"Drawing centroid at {centroid}")
     sphere.translate(centroid)
     vis.add_geometry(sphere, reset_bounding_box=False)
 
@@ -73,6 +73,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
     synthetic_bbox.compute_bboxes()
+    synthetic_data_range = synthetic_bbox.data_range
         
     ### Global parameters
 
@@ -86,7 +87,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     # estimate fps from first and last timestamps and number of frames
     detection_fps = estimate_detection_frame_rate(detection_bbox.complete_timestamps)
     print(f"Estimated FPS: {detection_fps}")
-        
+   
     ### Visualization
 
     o3d_visualizer.setup()
@@ -97,7 +98,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     range_end = detection_data_range[1]
     playback_fps = detection_fps * config_data['alignment_config']['playback_speed']
 
-    paused = False
+    paused = True
     run = True
     exit = False
     

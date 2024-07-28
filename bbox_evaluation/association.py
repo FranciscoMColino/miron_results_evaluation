@@ -26,11 +26,12 @@ def iou_batch_2d(bboxes1, bboxes2):
     return(o)
 
 def associate_2d(bboxes1, bboxes2, iou_threshold):
+    iou_values = []
     if len(bboxes1) == 0 or len(bboxes2) == 0:
         matches = np.empty((0,2),dtype=int)
         unmatched_bboxes1 = np.arange(len(bboxes1))
         unmatched_bboxes2 = np.arange(len(bboxes2))
-        return matches, unmatched_bboxes1, unmatched_bboxes2
+        return matches, unmatched_bboxes1, unmatched_bboxes2, iou_values
     iou_matrix = iou_batch_2d(bboxes1, bboxes2)
     if min(iou_matrix.shape) > 0:
         a = (iou_matrix > iou_threshold).astype(np.int32)
@@ -52,7 +53,7 @@ def associate_2d(bboxes1, bboxes2, iou_threshold):
 
     #filter out matched with low IOU
     matches = []
-    iou_values = []
+    
     for m in matched_indices:
         if(iou_matrix[m[0], m[1]]<iou_threshold):
             unmatched_bboxes1.append(m[0])

@@ -1,11 +1,12 @@
 IoU_thresholds: [0.1, 0.2, 0.3, 0.4]
 
-geometry_mode: '3d' # '2d' or '3d'
+geometry_mode: '2d' # '2d' or '3d'
 
 detection_loader:
   #data_path: '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2' # Path to the detection data on the RTX machine
   #data_path: '/home/colino/hawk/detection_data/ermis_detection/tests/simulation_alignment_2-pdf8.0_pfr30.0_dmNEURALPLUS_pcf30.0_dc25_dtf99' # Path to the detection data on the Personal machine
-  data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/TransporterPallet-SideToSide-CloseRange-1' # Path to the detection data on the Personal machine
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/TransporterPallet-SideToSide-CloseRange-1' # Path to the detection data on the Personal machine
+  data_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_no_occlusion/TransporterPallet-SideToSide-CloseRange-2'
   int_precision: 5
 
 synthetic_loader:
@@ -23,8 +24,7 @@ synthetic_loader:
   #[ [-1.0000000000000002, -7.885984946898293e-16, -3.445092848397667e-16], [-5.665538897647981e-16, -9.957992501029616e-17, 1.0000000000000002], [-5.66553889764798e-16, 1.0000000000000002, 3.2162452993532727e-16] ]
 
 alignment_config:
-  auto_offset_alignment: True
   detection_frame_offset: 15
-  synthetic_frame_offset: 23
+  synthetic_frame_offset: 27
   synthetic_fps: 30
   playback_speed: 1.0 # 1.0 for real-time playback, used for better visualization
