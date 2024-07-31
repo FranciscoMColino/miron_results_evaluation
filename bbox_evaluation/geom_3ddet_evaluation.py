@@ -19,7 +19,7 @@ def get_bbox_extremes(bbox):
     max_coords = np.max(bbox, axis=0)
     return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
 
-def evaluate_data(config_data, verbose=False):
+def geom_evaluate_3ddet_data(config_data, verbose=False):
 
     # Load from config data to variables
     detection_data_path = config_data['detection_path']
@@ -29,7 +29,7 @@ def evaluate_data(config_data, verbose=False):
     detection_frame_offset = config_data['detection_frame_offset']
     synthetic_frame_offset = config_data['synthetic_frame_offset']
     synthetic_fps = config_data['synthetic_fps']
-    iou_thresholds = config_data['IoU_thresholds']
+    iou_thresholds = config_data['iou_thresholds']
 
     # Load detection data    
     detection_bbox = Detection3dBbox(detection_data_path)
@@ -49,10 +49,6 @@ def evaluate_data(config_data, verbose=False):
     ### Global parameters
     if detection_frame_offset < 0 or synthetic_frame_offset < 0:
         raise ValueError("Frame offsets must be positive")
-    
-    # estimate fps from first and last timestamps and number of frames
-    detection_fps = estimate_detection_frame_rate(detection_bbox.complete_timestamps)
-    print(f"Estimated FPS: {detection_fps}")
 
     initial_detection_timestamp = detection_bbox.complete_timestamps[0]
     data_range = detection_data_range
@@ -102,8 +98,9 @@ def evaluate_data(config_data, verbose=False):
         _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
         avg_frame_iou = np.mean(frame_iou)
         avg_frame_iou_collection[analysed_frames] = avg_frame_iou
-
-        print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
+        
+        if verbose:
+            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
 
         for j, iou_threshold in enumerate(iou_thresholds):
             matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
@@ -169,7 +166,8 @@ def evaluate_data(config_data, verbose=False):
 
         pretty_print_evaluation_results(final_evaluation_results)
 
-    print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
+    if verbose:
+        print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
 
     return final_evaluation_results
 
@@ -187,7 +185,7 @@ def main():
     with open(args.config_file, 'r') as file:
         config_data = yaml.safe_load(file)
 
-    evaluate_data(config_data, verbose=True)
+    geom_evaluate_3ddet_data(config_data, verbose=True)
 
 if __name__ == "__main__":
     main()

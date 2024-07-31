@@ -5,7 +5,7 @@ import open3d as o3d
 
 class SyntheticBbox():
     def __init__(self, data_path, int_precision=4, 
-                 multi_sem_classes=None, translation_vector=None, rotation_matrix=None):
+                 multi_sem_classes=[], translation_vector=None, rotation_matrix=None):
         self.data_path = data_path
         self.int_precision = int_precision
         self.file_indices = []
@@ -13,7 +13,7 @@ class SyntheticBbox():
         self.complete_points = None
         self.complete_labels = None
         self.complete_bboxes = None
-        self.single_sem_classes = None
+        self.single_sem_classes = []
         self.multi_sem_classes = multi_sem_classes
         self.translation_vector = translation_vector
         self.rotation_matrix = rotation_matrix

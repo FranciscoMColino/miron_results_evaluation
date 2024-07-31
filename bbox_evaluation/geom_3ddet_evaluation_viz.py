@@ -39,47 +39,30 @@ def draw_centroid(vis, centroid, color):
 
 def evaluate_visualize_data(config_data, o3d_visualizer):
 
+    detection_data_path = config_data['evaluation_data']['detection_path']
+    synthetic_data_path = config_data['evaluation_data']['synthetic_path']
+    detection_frame_offset = config_data['evaluation_data']['detection_frame_offset']
+    synthetic_frame_offset = config_data['evaluation_data']['synthetic_frame_offset']
+    synthetic_fps = config_data['evaluation_data']['synthetic_fps']
+    camera_position = np.array(config_data['camera_position'])
+    camera_rotation = np.array(config_data['camera_rotation'])
+    iou_thresholds = config_data['iou_thresholds']
+    playback_speed = config_data['playback_speed']
+
     ### Load detection data
-
-    detection_data_path = config_data['detection_loader']['data_path']
-    detection_int_precision = config_data['detection_loader']['int_precision']
-
-    detection_bbox = Detection3dBbox(detection_data_path, int_precision=detection_int_precision)
+    detection_bbox = Detection3dBbox(detection_data_path)
     detection_bbox.setup()
     detection_bbox.load_data()
     detection_bbox.compute_bboxes()
     detection_data_range = detection_bbox.data_range
 
-    # Load synthetic data
-
-    synthetic_data_path = config_data['synthetic_loader']['data_path']
-    synthetic_int_precision = config_data['synthetic_loader']['int_precision']
-    synthetic_multi_sem_classes = config_data['synthetic_loader']['multi_sem_classes']
-    synthetic_camera_position = np.array(config_data['synthetic_loader']['camera_position'])
-    synthetic_camera_rotation = np.array(config_data['synthetic_loader']['camera_rotation'])
-    
-    """
-    Global Position: (-10.000000000540384, 5.0018717613276635, 0.21277073854091316)
-    Rotation Matrix:
-    ( (0.9999999999999993, 3.42285420007471e-8, 0), (-5.434188106286747e-22, 1.587618925213973e-14, 1), (3.42285420007471e-8, -0.9999999999999993, 1.587618925213974e-14) )
-    """
-        
-    
-    translation_vector, rotation_matrix = get_translation_and_rotation_from_camera_properties(synthetic_camera_position, synthetic_camera_rotation)
-                
-    synthetic_bbox = SyntheticBbox(synthetic_data_path, multi_sem_classes=synthetic_multi_sem_classes, int_precision=synthetic_int_precision,
-                                    translation_vector=translation_vector, rotation_matrix=rotation_matrix)
+    # Load synthetic data 
+    translation_vector, rotation_matrix = get_translation_and_rotation_from_camera_properties(camera_position, camera_rotation)
+    synthetic_bbox = SyntheticBbox(synthetic_data_path, translation_vector=translation_vector, rotation_matrix=rotation_matrix)
     synthetic_bbox.setup()
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
     synthetic_bbox.compute_bboxes()
-    synthetic_data_range = synthetic_bbox.data_range
-        
-    ### Global parameters
-
-    detection_frame_offset = config_data['alignment_config']['detection_frame_offset']
-    synthetic_frame_offset = config_data['alignment_config']['synthetic_frame_offset']
-    synthetic_fps = config_data['alignment_config']['synthetic_fps']
         
     if detection_frame_offset < 0 or synthetic_frame_offset < 0:
         raise ValueError("Frame offsets must be positive")
@@ -89,14 +72,12 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     print(f"Estimated FPS: {detection_fps}")
    
     ### Visualization
-
     o3d_visualizer.setup()
-
     initial_detection_timestamp = detection_bbox.complete_timestamps[0]
     data_range = detection_data_range
     range_start = detection_data_range[0] + detection_frame_offset
     range_end = detection_data_range[1]
-    playback_fps = detection_fps * config_data['alignment_config']['playback_speed']
+    playback_fps = detection_fps * playback_speed
 
     paused = True
     run = True
@@ -115,9 +96,6 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
     o3d_visualizer.vis.register_key_callback(32, pause_key_callback)  # Space bar key
     o3d_visualizer.vis.register_key_callback(256, exit_key_callback)  # ESC key
-
-
-    iou_thresholds = config_data['IoU_thresholds']
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
     
@@ -298,8 +276,6 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     pretty_print_evaluation_results(final_evaluation_results)
 
     print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
-
-
 
 def main():
     parser = argparse.ArgumentParser(description='Visualize detection and synthetic data')
