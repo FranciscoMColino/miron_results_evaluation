@@ -126,20 +126,20 @@ def geom_evaluate_3ddet_data(config_data, verbose=False):
     # strip the zeros from the results collection
     results_collection = results_collection[:analysed_frames]
 
-    average_precision = np.zeros(len(iou_thresholds))
-    average_recall = np.zeros(len(iou_thresholds))
-    average_iou = np.zeros(len(iou_thresholds))
+    precision_values = [[] for _ in iou_thresholds]
+    recall_values = [[] for _ in iou_thresholds]
+    iou_values = [[] for _ in iou_thresholds]
 
     for frame_results in results_collection:
         for i, (precision, recall, iou) in enumerate(frame_results):
-            average_precision[i] += precision
-            average_recall[i] += recall
+            precision_values[i].append(precision)
+            recall_values[i].append(recall)
             if iou > 0:
-                average_iou[i] += iou
+                iou_values[i].append(iou)
 
-    average_precision /= analysed_frames
-    average_recall /= analysed_frames
-    average_iou /= analysed_frames
+    average_precision = np.array([np.mean(values) for values in precision_values])
+    average_recall = np.array([np.mean(values) for values in recall_values])
+    average_iou = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in iou_values])
 
     avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
 

@@ -54,7 +54,8 @@ def multi_eval_record(config_data, verbose=False):
             recall_values[i].append(value)
         iou = results['iou']
         for i, value in enumerate(iou):
-            iou_values[i].append(value)
+            if value > 0:
+                iou_values[i].append(value)
 
     average_precision = np.array([np.mean(values) for values in precision_values])
     average_recall = np.array([np.mean(values) for values in recall_values])
