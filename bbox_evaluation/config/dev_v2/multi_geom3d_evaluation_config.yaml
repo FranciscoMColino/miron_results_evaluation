@@ -1,7 +1,10 @@
 IoU_thresholds: [0.1, 0.2, 0.3, 0.4]
 
+geometry_mode: '3d'
+
 evaluation_data: [
   {
+    eval_name: 'SingleLargeForkliftC-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1-det1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1',
     detection_frame_offset: 0,
