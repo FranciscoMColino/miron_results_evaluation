@@ -1,0 +1,48 @@
+IoU_thresholds: [0.1, 0.2, 0.3, 0.4]
+
+geometry_mode: '3d' # '2d' or '3d'
+
+detection_loader:
+  #data_path: '/home/digi2/colino_dir/detection_data/ermis_detection/detection_res_2' # Path to the detection data on the RTX machine
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/tests/simulation_alignment_2-pdf8.0_pfr30.0_dmNEURALPLUS_pcf30.0_dc25_dtf99' # Path to the detection data on the Personal machine
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/TransporterPallet-SideToSide-CloseRange-1' # Path to the detection data on the Personal machine
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/static_environment/MultiPeople-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/static_environment/MultiPeople-v2-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/static_environment/MultiSmallBots-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/static_environment/MultiMediumBots-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/static_environment/MultiLargeBots-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumCarter-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumTransporter-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumJackal-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1-det1'
+  #data_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1-det1'
+  int_precision: 5
+
+synthetic_loader:
+  #data_path: '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1' # Path to the synthetic data on the RTX machine
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/tests/SimulationAlignment_2' # Path to the synthetic data on the Personal machine
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/TransporterPallet-SideToSide-CloseRange-1-300frames_30fps-1' # Path to the synthetic data on the Personal machine
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiPeople-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiPeople-v2-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiMediumBots-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiLargeBots-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumCarter-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumTransporter-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumJackal-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1'
+  #data_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1'
+  int_precision: 4
+  multi_sem_classes: ['wetfloorsign', 'alignmentobj']
+  camera_position: [-9.91, 4.97, 0.5]
+  # extracted from LeftCamera
+  #camera_rotation: [ [-1.0000000000000002, -7.885984946898293e-16, -3.445092848397667e-16], [-5.665538897647981e-16, -9.957992501029616e-17, 1.0000000000000002], [-5.66553889764798e-16, 1.0000000000000002, 3.2162452993532727e-16] ]
+  # extracted from ZED_X
+  camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
+
+alignment_config:
+  auto_offset_alignment: True
+  detection_frame_offset: 0
+  synthetic_frame_offset: 7
+  synthetic_fps: 30
+  playback_speed: 1.0 # 1.0 for real-time playback, used for better visualization
