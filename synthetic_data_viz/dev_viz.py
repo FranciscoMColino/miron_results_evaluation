@@ -9,7 +9,7 @@ from common.data_control.synthetic_bbox import SyntheticBbox
 
 ### Loading data
 
-synthetic_data_path = '/home/digi2/colino_dir/gen_data_ground_truth/figure8_transporter_empty-30fps_800frames-rec1'
+synthetic_data_path = '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiPeople-v2-t1'
     
 ### Transformations according to the camera coordinate system
 """
@@ -47,8 +47,7 @@ rotation_matrix = camera_rotation @ rotation_x_minus_90.T @ rotation_matrix
             
 singl_sem_classes = ['transporter1_mesh']
 
-synthetic_bbox = SyntheticBbox(synthetic_data_path, singl_sem_classes=singl_sem_classes,
-                                translate_vector=translation_vector, rotation_matrix=rotation_matrix)
+synthetic_bbox = SyntheticBbox(synthetic_data_path, translation_vector=translation_vector, rotation_matrix=rotation_matrix)
 synthetic_bbox.setup()
 synthetic_bbox.load_labels()
 synthetic_bbox.load_data()
@@ -63,7 +62,7 @@ for i in range(data_range[0], data_range[1] + 1):
     complete_pcds[i - data_range[0]] = []
     complete_bboxes[i - data_range[0]] = []
 
-    for j, bbox_points in enumerate(synthetic_bbox.complete_bbox_points[i - data_range[0]]):
+    for j, bbox_points in enumerate(synthetic_bbox.complete_points[i - data_range[0]]):
         
         bbox_points = np.array(bbox_points).astype(np.float64)
         
