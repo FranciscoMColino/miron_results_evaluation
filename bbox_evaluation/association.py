@@ -9,6 +9,21 @@ def linear_assignment(cost_matrix):
         from scipy.optimize import linear_sum_assignment
         x, y = linear_sum_assignment(cost_matrix)
         return np.array(list(zip(x, y)))
+    
+def iou_2d(bbox1, bbox2):
+    """
+    Computes IoU between two 2D bounding boxes.
+    Each box is represented by [x_min, y_min, x_max, y_max]
+    """
+    xx1 = np.maximum(bbox1[0], bbox2[0])
+    yy1 = np.maximum(bbox1[1], bbox2[1])
+    xx2 = np.minimum(bbox1[2], bbox2[2])
+    yy2 = np.minimum(bbox1[3], bbox2[3])
+    w = np.maximum(0., xx2 - xx1)
+    h = np.maximum(0., yy2 - yy1)
+    wh = w * h
+    o = wh / ((bbox1[2] - bbox1[0]) * (bbox1[3] - bbox1[1]) + (bbox2[2] - bbox2[0]) * (bbox2[3] - bbox2[1]) - wh)
+    return o
 
 def iou_batch_2d(bboxes1, bboxes2):
     bboxes2 = np.expand_dims(bboxes2, 0)
