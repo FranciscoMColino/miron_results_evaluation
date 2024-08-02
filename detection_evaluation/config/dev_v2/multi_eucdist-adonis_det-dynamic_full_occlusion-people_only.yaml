@@ -7,33 +7,9 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/dev_v2/multi_eucdist_2ddet_dynamic_full_occlusion'
+  output_dir: 'detection_evaluation/results/eucdist_2ddet/multi_eucdist-adonis_det-dynamic_full_occlusion-people_only_1-t1'
 
 evaluation_data: [
-  {
-    name_id: 'MediumBotLargeBotOcc-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MediumBotLargeBotOcc-v1-t1-erm1-ado1',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MediumBotLargeBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
-    synthetic_fps: 30,
-  },
-  {
-    name_id: 'MediumBotSmallBotOcc-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MediumBotSmallBotOcc-v1-t1-erm1-ado1',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MediumBotSmallBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
-    synthetic_fps: 30,
-  },
-  {
-    name_id: 'MixedOcc-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MixedOcc-v1-t1-erm1-ado1',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MixedOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
-    synthetic_fps: 30,
-  },
   {
     name_id: 'SinglePersonTallBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/SinglePersonTallBotOcc-v1-t1-erm1-ado1',
@@ -64,14 +40,6 @@ evaluation_data: [
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/SinglePersonTallBotOcc-v4-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 5,
-    synthetic_fps: 30,
-  },
-  {
-    name_id: 'TallBotMediumBotOcc-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1-erm1-ado1',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 6,
     synthetic_fps: 30,
   },
 
