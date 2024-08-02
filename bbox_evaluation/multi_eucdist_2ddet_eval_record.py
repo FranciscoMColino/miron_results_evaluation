@@ -17,14 +17,10 @@ def multi_eval_record(config_data, verbose=False):
     evaluation_data = config_data['evaluation_data']
 
     geometry_mode = config_data['geometry_mode']
-
-    if geometry_mode != '3d':
-        raise ValueError("Geometry mode must be 3d")
     
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
     camera_position = config_data['camera_position']
     camera_rotation = config_data['camera_rotation']
-    geometry_mode = config_data['geometry_mode']
 
     print(f"Lenght of evaluation data: {len(evaluation_data)}")
 

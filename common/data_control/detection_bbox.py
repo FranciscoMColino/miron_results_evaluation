@@ -159,9 +159,6 @@ class Detection2dBbox():
     def convert_to_2d_boxes(self):
         detection_data_range = self.data_range
         self.complete_2d_bboxes = np.empty(detection_data_range[1] - detection_data_range[0] + 1, dtype=list)
-
-        print("here")
-
         for i in range(detection_data_range[0], detection_data_range[1] + 1):
             self.complete_2d_bboxes[i - detection_data_range[0]] = []
             
@@ -169,8 +166,5 @@ class Detection2dBbox():
                 min_x, max_x = np.min(bbox_points[:, 0]), np.max(bbox_points[:, 0])
                 min_y, max_y = np.min(bbox_points[:, 1]), np.max(bbox_points[:, 1])
                 bbox_2d = np.array([[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]])
-                print(bbox_2d)
                 self.complete_2d_bboxes[i - detection_data_range[0]].append(bbox_2d)
-                print(self.complete_2d_bboxes[i - detection_data_range[0]])
-
         
