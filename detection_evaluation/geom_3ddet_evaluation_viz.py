@@ -12,7 +12,7 @@ from common.data_control.synthetic_bbox import SyntheticBbox
 from common.data_control.detection_bbox import Detection3dBbox
 from common.data_control.utils import *
 
-from bbox_evaluation.association import *
+from detection_evaluation.association import *
 
 # TODO move to file
 DETECTION_POINT_COLOR = [0.7, 0, 0.7] 

@@ -11,7 +11,7 @@ from common.data_control.synthetic_bbox import SyntheticBbox
 from common.data_control.detection_bbox import Detection3dBbox
 from common.data_control.utils import *
 
-from bbox_evaluation.association import *
+from detection_evaluation.association import *
 
 def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
@@ -19,7 +19,7 @@ def get_bbox_extremes(bbox):
     max_coords = np.max(bbox, axis=0)
     return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
 
-def eucdist_evaluate_3ddet_data(config_data, verbose=False):
+def geom_evaluate_3ddet_data(config_data, verbose=False):
 
     # Load from config data to variables
     detection_data_path = config_data['detection_path']
@@ -29,7 +29,7 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
     detection_frame_offset = config_data['detection_frame_offset']
     synthetic_frame_offset = config_data['synthetic_frame_offset']
     synthetic_fps = config_data['synthetic_fps']
-    euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
+    iou_thresholds = config_data['iou_thresholds']
 
     # Load detection data    
     detection_bbox = Detection3dBbox(detection_data_path)
@@ -57,10 +57,11 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
     
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4')]
-    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(euclidean_distance_thresholds)), dtype=frame_results_dtype)
+    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4')]
+    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
 
     analysed_frames = 0
+    match_ocurred_per_threshould = np.zeros((len(iou_thresholds),), dtype=int)
 
     avg_frame_iou_collection = np.zeros((len(detection_bbox.complete_timestamps),), dtype='f4')
 
@@ -80,52 +81,43 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
         elif synthetic_frame >= len(synthetic_bbox.complete_points):
             break
         
-        detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
-        synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
+        detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
+        synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
-        detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
-        synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
+        """
+            For every IoU threshold, associate the detections with the synthetic data
+            the metrics to be calculated are:
+            - Precision
+            - IoU
+            - Recall
+        """
 
-        frame_results = np.zeros((len(euclidean_distance_thresholds),), dtype=frame_results_dtype)
+        
+        frame_results = np.zeros((len(iou_thresholds),), dtype=frame_results_dtype)
 
+        _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
+        avg_frame_iou = np.mean(frame_iou)
+        avg_frame_iou_collection[analysed_frames] = avg_frame_iou
+        
         if verbose:
-            print(f"\nFrame {analysed_frames}")
+            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
 
-        for j, euclidean_dist_treshold in enumerate(euclidean_distance_thresholds):
-            matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
+        for j, iou_threshold in enumerate(iou_thresholds):
+            matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
             true_positives = len(matches)
-            false_positives = len(unmatched_synthetic)
-            ground_truth_count = len(synthetic_2d_centers)
+            false_positives = len(unmatched_detections)
+            ground_truth_count = len(synthetic_assoc_bounds)
 
             precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
             recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-            translation_error = np.mean(dist_values)
+            iou = np.mean(iou_values) if len(iou_values) > 0 else -1
 
-            scale_error_iou_values = []
+            match_ocurred_per_threshould[j] += 1 if true_positives > 0 else 0
 
-            for match in matches:
-                detection_bbox_points = detection_bbox.complete_bboxes[detection_frame][match[0]]
-                synthetic_bbox_points = synthetic_bbox.complete_bboxes[synthetic_frame][match[1]]
-                detection_extremes = get_bbox_extremes(detection_bbox_points)
-                synthetic_extremes = get_bbox_extremes(synthetic_bbox_points)
-                detection_center = detection_centroids[match[0]]
-                synthetic_center = synthetic_centroids[match[1]]
-
-                # translate bboxes to origin
-                detection_extremes[:3] = np.array(detection_extremes[:3]) - detection_center
-                detection_extremes[3:] = np.array(detection_extremes[3:]) - detection_center
-                synthetic_extremes[:3] = np.array(synthetic_extremes[:3]) - synthetic_center
-                synthetic_extremes[3:] = np.array(synthetic_extremes[3:]) - synthetic_center
-
-                iou_value = iou_3d(detection_extremes, synthetic_extremes)
-                scale_error_iou_values.append(iou_value)
-
-            scale_error = 1 - np.mean(scale_error_iou_values)
-
-            frame_results[j] = (precision, recall, translation_error, scale_error)
-
+            frame_results[j] = (precision, recall, iou)
+            # print rounded to 2 decimal places
             if verbose:
-                print(f"Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")
+                print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}")
 
         
         results_collection[analysed_frames] = frame_results
@@ -134,40 +126,35 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
     # strip the zeros from the results collection
     results_collection = results_collection[:analysed_frames]
 
-    precision_values = [[] for _ in euclidean_distance_thresholds]
-    recall_values = [[] for _ in euclidean_distance_thresholds]
-    translation_error_values = [[] for _ in euclidean_distance_thresholds]
-    scale_error_values = [[] for _ in euclidean_distance_thresholds]
+    precision_values = [[] for _ in iou_thresholds]
+    recall_values = [[] for _ in iou_thresholds]
+    iou_values = [[] for _ in iou_thresholds]
 
     for frame_results in results_collection:
-        for i, (precision, recall, translation_error, scale_error) in enumerate(frame_results):
+        for i, (precision, recall, iou) in enumerate(frame_results):
             precision_values[i].append(precision)
             recall_values[i].append(recall)
-            # if not nan 
-            if not math.isnan(translation_error):
-                translation_error_values[i].append(translation_error)
-            if not math.isnan(scale_error):
-                scale_error_values[i].append(scale_error)
+            if iou > 0:
+                iou_values[i].append(iou)
 
     average_precision = np.array([np.mean(values) for values in precision_values])
     average_recall = np.array([np.mean(values) for values in recall_values])
-    average_translation_error = np.array([np.mean(values) for values in translation_error_values])
-    average_scale_error = np.array([np.mean(values) for values in scale_error_values])
+    average_iou = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in iou_values])
 
     avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
 
-    evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), 
-                                ('precision', 'f4', len(euclidean_distance_thresholds)),
-                                ('recall', 'f4', len(euclidean_distance_thresholds)),
-                                ('translation_error', 'f4', len(euclidean_distance_thresholds)),
-                                ('scale_error', 'f4', len(euclidean_distance_thresholds))]
+    evaluation_results_dtype = [
+        ('thresholds' , 'f4', len(iou_thresholds)),
+        ('precision', 'f4', len(iou_thresholds)),
+        ('recall', 'f4', len(iou_thresholds)),
+        ('iou', 'f4', len(iou_thresholds)),
+    ]
 
     final_evaluation_results = np.array((
-        euclidean_distance_thresholds,
+        iou_thresholds,
         average_precision,
         average_recall,
-        average_translation_error,
-        average_scale_error
+        average_iou
     ), dtype=evaluation_results_dtype)
 
     if verbose:
@@ -184,6 +171,8 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
 
     return final_evaluation_results
 
+
+
 def main():
     parser = argparse.ArgumentParser(description='Benchmark detection against synthetic data')
     parser.add_argument('config_file', type=str, help='Path to the config file')
@@ -196,7 +185,7 @@ def main():
     with open(args.config_file, 'r') as file:
         config_data = yaml.safe_load(file)
 
-    eucdist_evaluate_3ddet_data(config_data, verbose=True)
+    geom_evaluate_3ddet_data(config_data, verbose=True)
 
 if __name__ == "__main__":
     main()

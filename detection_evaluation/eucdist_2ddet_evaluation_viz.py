@@ -9,10 +9,10 @@ import math
 
 from common.o3d_visualizer import O3dVisualizer
 from common.data_control.synthetic_bbox import SyntheticBbox
-from common.data_control.detection_bbox import Detection3dBbox
+from common.data_control.detection_bbox import Detection3dBbox, Detection2dBbox
 from common.data_control.utils import *
 
-from bbox_evaluation.association import *
+from detection_evaluation.association import *
 
 # TODO move to file
 DETECTION_POINT_COLOR = [0.7, 0, 0.7] 
@@ -28,7 +28,7 @@ def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
     min_coords = np.min(bbox, axis=0)
     max_coords = np.max(bbox, axis=0)
-    return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
+    return np.concatenate((min_coords, max_coords))
 
 def draw_centroid(vis, centroid, color):
     sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
@@ -49,12 +49,17 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
     synthetic_fps = config_data['evaluation_data']['synthetic_fps']
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
     playback_speed = config_data['playback_speed']
+    geometry_mode = config_data['geometry_mode']
 
     # Load detection data    
-    detection_bbox = Detection3dBbox(detection_data_path)
+    if geometry_mode == '2d':
+        detection_bbox = Detection2dBbox(detection_data_path)
+    else:
+        detection_bbox = Detection3dBbox(detection_data_path)
     detection_bbox.setup()
     detection_bbox.load_data()
     detection_bbox.compute_bboxes()
+    detection_bbox.convert_to_2d_boxes()
     detection_data_range = detection_bbox.data_range
 
     # Load synthetic data 
@@ -64,6 +69,7 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
     synthetic_bbox.load_labels()
     synthetic_bbox.load_data()
     synthetic_bbox.compute_bboxes()
+    synthetic_bbox.convert_to_2d_boxes()
         
     ### Global parameters
     if detection_frame_offset < 0 or synthetic_frame_offset < 0:
@@ -128,8 +134,8 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
             elif synthetic_frame >= len(synthetic_bbox.complete_points):
                 break
             
-            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
-            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
+            detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_2d_bboxes[detection_frame]]
+            synthetic_centroids = [get_centroid_from_points(bbox_points) for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]]
 
             detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
             synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
@@ -152,20 +158,18 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
                 scale_error_iou_values = []
 
                 for match in matches:
-                    detection_bbox_points = detection_bbox.complete_bboxes[detection_frame][match[0]]
-                    synthetic_bbox_points = synthetic_bbox.complete_bboxes[synthetic_frame][match[1]]
+                    detection_bbox_points = detection_bbox.complete_2d_bboxes[detection_frame][match[0]]
+                    synthetic_bbox_points = synthetic_bbox.complete_2d_bboxes[synthetic_frame][match[1]]
                     detection_extremes = get_bbox_extremes(detection_bbox_points)
                     synthetic_extremes = get_bbox_extremes(synthetic_bbox_points)
                     detection_center = detection_centroids[match[0]]
                     synthetic_center = synthetic_centroids[match[1]]
 
                     # translate bboxes to origin
-                    detection_extremes[:3] = np.array(detection_extremes[:3]) - detection_center
-                    detection_extremes[3:] = np.array(detection_extremes[3:]) - detection_center
-                    synthetic_extremes[:3] = np.array(synthetic_extremes[:3]) - synthetic_center
-                    synthetic_extremes[3:] = np.array(synthetic_extremes[3:]) - synthetic_center
+                    detection_extremes = np.array(detection_extremes) - np.concatenate((detection_center, detection_center))
+                    synthetic_extremes = np.array(synthetic_extremes) - np.concatenate((synthetic_center, synthetic_center))
 
-                    iou_value = iou_3d(detection_extremes, synthetic_extremes)
+                    iou_value = iou_2d(detection_extremes, synthetic_extremes)
                     scale_error_iou_values.append(iou_value)
 
                 scale_error = 1 - np.mean(scale_error_iou_values)
@@ -181,20 +185,14 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
 
             o3d_visualizer.reset()
 
+            VISUALIZATION_BOX_MIN_Z = -0.01
+            VISUALIZATION_BOX_MAX_Z = 0.01
 
-            for points in detection_bbox.complete_points[detection_frame]:
-                pcd = o3d.geometry.PointCloud()
-                pcd.points = o3d.utility.Vector3dVector(points)
-                pcd.paint_uniform_color(DETECTION_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
-
-            for points in synthetic_bbox.complete_points[synthetic_frame]:
-                pcd = o3d.geometry.PointCloud()
-                pcd.points = o3d.utility.Vector3dVector(points)
-                pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
-                o3d_visualizer.vis.add_geometry(pcd, reset_bounding_box=False)
-
-            for bbox_points in detection_bbox.complete_bboxes[detection_frame]:
+            for bbox_points in detection_bbox.complete_2d_bboxes[detection_frame]:
+                bbox_points = np.array(bbox_points)
+                bbox_points = np.repeat(bbox_points, 2, axis=0)
+                # concatenate min and max z values, there is no z information in the 2d bboxes
+                bbox_points = np.concatenate((bbox_points, np.array([VISUALIZATION_BOX_MIN_Z, VISUALIZATION_BOX_MAX_Z] * 4).reshape(-1, 1)), axis=1)
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(bbox_points)
                 pcd.paint_uniform_color(DETECTION_POINT_COLOR)
@@ -203,7 +201,10 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
                 bbox.color = DETECTION_BBOX_COLOR
                 o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
 
-            for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]:
+            for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]:
+                bbox_points = np.array(bbox_points)
+                bbox_points = np.repeat(bbox_points, 2, axis=0)
+                bbox_points = np.concatenate((bbox_points, np.array([VISUALIZATION_BOX_MIN_Z, VISUALIZATION_BOX_MAX_Z] * 4).reshape(-1, 1)), axis=1)
                 pcd = o3d.geometry.PointCloud()
                 pcd.points = o3d.utility.Vector3dVector(bbox_points)
                 pcd.paint_uniform_color(SYNTHETIC_POINT_COLOR)
@@ -213,9 +214,13 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
                 o3d_visualizer.vis.add_geometry(bbox, reset_bounding_box=False)
 
             for centroid in detection_centroids:
+                # add z component to centroid
+                centroid = np.append(centroid, VISUALIZATION_BOX_MAX_Z)
                 draw_centroid(o3d_visualizer.vis, centroid, DETECTION_CENTER_COLOR)
 
             for centroid in synthetic_centroids:
+                # add z component to centroid
+                centroid = np.append(centroid, VISUALIZATION_BOX_MAX_Z)
                 draw_centroid(o3d_visualizer.vis, centroid, SYNTHETIC_CENTER_COLOR)
 
             o3d_visualizer.render()

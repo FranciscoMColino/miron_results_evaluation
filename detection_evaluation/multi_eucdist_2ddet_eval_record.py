@@ -4,7 +4,7 @@ import yaml
 import numpy as np
 import math
 
-from bbox_evaluation.eucdist_3ddet_evaluation import eucdist_evaluate_3ddet_data
+from detection_evaluation.eucdist_2ddet_evaluation import eucdist_evaluate_2ddet_data
 
 def pretty_print_evaluation_results(results):
     print("\nFinal Evaluation Results:")
@@ -17,9 +17,6 @@ def multi_eval_record(config_data, verbose=False):
     evaluation_data = config_data['evaluation_data']
 
     geometry_mode = config_data['geometry_mode']
-
-    if geometry_mode != '3d':
-        raise ValueError("Geometry mode must be 3d")
     
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
     camera_position = config_data['camera_position']
@@ -34,8 +31,9 @@ def multi_eval_record(config_data, verbose=False):
         data['euclidean_distance_thresholds'] = euclidean_distance_thresholds
         data['camera_position'] = camera_position
         data['camera_rotation'] = camera_rotation
+        data['geometry_mode'] = geometry_mode
         
-        results = eucdist_evaluate_3ddet_data(data, verbose=False)
+        results = eucdist_evaluate_2ddet_data(data, verbose=False)
         pretty_print_evaluation_results(results)
 
         sims_results.append(results)

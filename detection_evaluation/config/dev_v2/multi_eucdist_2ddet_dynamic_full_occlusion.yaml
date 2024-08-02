@@ -5,6 +5,10 @@ geometry_mode: '2d'
 camera_position: [-9.91, 4.97, 0.5]
 camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
 
+results_recording:
+  enabled: True
+  output_dir: 'detection_evaluation/results/dev_v2/multi_eucdist_2ddet_dynamic_full_occlusion'
+
 evaluation_data: [
   {
     name_id: 'MediumBotLargeBotOcc-v1-t1',

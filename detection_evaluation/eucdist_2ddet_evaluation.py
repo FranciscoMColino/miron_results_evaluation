@@ -11,7 +11,7 @@ from common.data_control.synthetic_bbox import SyntheticBbox
 from common.data_control.detection_bbox import Detection3dBbox, Detection2dBbox
 from common.data_control.utils import *
 
-from bbox_evaluation.association import *
+from detection_evaluation.association import *
 
 
 def get_bbox_extremes(bbox):
