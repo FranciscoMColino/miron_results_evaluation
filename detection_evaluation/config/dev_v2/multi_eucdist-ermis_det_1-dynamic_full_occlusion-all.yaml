@@ -1,4 +1,4 @@
-euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ]
+euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. , 1.5, 2.]
 
 geometry_mode: '3d'
 
@@ -7,7 +7,7 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/eucdist_2dbbox/multi_eucdist_3ddet_dynamic_full_occlusion-all_scenarios_1-t1'
+  output_dir: 'detection_evaluation/results/eucdist_2dbbox/multi_eucdist-ermis_det_1-dynamic_full_occlusion-all-t1'
 
 evaluation_data: [
   {
@@ -70,6 +70,14 @@ evaluation_data: [
     name_id: 'TallBotMediumBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1-det1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 6,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'TallBotMediumBotOcc-v2-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_full_occlusion/TallBotMediumBotOcc-v2-t1-det1',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/TallBotMediumBotOcc-v2-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
     synthetic_fps: 30,

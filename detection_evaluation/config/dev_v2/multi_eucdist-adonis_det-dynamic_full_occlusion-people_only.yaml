@@ -7,7 +7,7 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/eucdist_2ddet/multi_eucdist-adonis_det-dynamic_full_occlusion-people_only_1-t1'
+  output_dir: 'detection_evaluation/results/eucdist_2dbbox/multi_eucdist-adonis_det-dynamic_full_occlusion-people_only-t1'
 
 evaluation_data: [
   {

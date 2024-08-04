@@ -107,7 +107,7 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
         for j, euclidean_dist_treshold in enumerate(euclidean_distance_thresholds):
             matches, unmatched_detections, unmatched_synthetic, dist_values = associate_euclidean(detection_2d_centers, synthetic_2d_centers, euclidean_dist_treshold)
             true_positives = len(matches)
-            false_positives = len(unmatched_synthetic)
+            false_positives = len(unmatched_detections)
             ground_truth_count = len(synthetic_2d_centers)
 
             precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0

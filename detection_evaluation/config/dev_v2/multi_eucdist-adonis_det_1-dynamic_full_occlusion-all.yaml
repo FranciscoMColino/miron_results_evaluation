@@ -1,4 +1,4 @@
-euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ]
+euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.]
 
 geometry_mode: '2d'
 
@@ -7,73 +7,81 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/eucdist_2dbbox/multi_eucdist_2ddet_dynamic_full_occlusion-all_scenarios_1-t1'
+  output_dir: 'detection_evaluation/results/eucdist_2dbbox/multi_eucdist-adonis_det_1-dynamic_full_occlusion-all-t1'
 
 evaluation_data: [
   {
     name_id: 'MediumBotLargeBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MediumBotLargeBotOcc-v1-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MediumBotLargeBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'MediumBotSmallBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MediumBotSmallBotOcc-v1-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MediumBotSmallBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'MixedOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/MixedOcc-v1-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/MixedOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'SinglePersonTallBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/SinglePersonTallBotOcc-v1-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/SinglePersonTallBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'SinglePersonTallBotOcc-v2-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/SinglePersonTallBotOcc-v2-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/SinglePersonTallBotOcc-v2-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'SinglePersonTallBotOcc-v3-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/SinglePersonTallBotOcc-v3-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/SinglePersonTallBotOcc-v3-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'SinglePersonTallBotOcc-v4-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/SinglePersonTallBotOcc-v4-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/SinglePersonTallBotOcc-v4-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 5,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 20,
     synthetic_fps: 30,
   },
   {
     name_id: 'TallBotMediumBotOcc-v1-t1',
     detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1-erm1-ado1',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/TallBotMediumBotOcc-v1-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 6,
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 21,
     synthetic_fps: 30,
   },
+  {
+    name_id: 'TallBotMediumBotOcc-v2-t1',
+    detection_path: '/home/colino/hawk/detection_data/adonis_detection/dynamic_full_occlusion/TallBotMediumBotOcc-v2-t1-erm1-ado1',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_full_occlusion/TallBotMediumBotOcc-v2-t1',
+    detection_frame_offset: 15,
+    synthetic_frame_offset: 21,
+    synthetic_fps: 30,
+  }
 
 
 ]
