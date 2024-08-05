@@ -47,6 +47,14 @@ def multi_eval_record(config_data):
 
         index_row = np.concatenate((['name_id'], config_data['euclidean_distance_thresholds']))
 
+        with open(precision_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(recall_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(translation_error_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(scale_error_file, 'w') as file:
+            file.write('sep=,\n')
 
         precision_df = pd.DataFrame(columns=index_row)
         recall_df = pd.DataFrame(columns=index_row)
@@ -138,10 +146,10 @@ def multi_eval_record(config_data):
         translation_error_df = pd.concat([translation_error_df, pd.DataFrame([['mean'] + list(average_translation_error)], columns=index_row)], ignore_index=True)
         scale_error_df = pd.concat([scale_error_df, pd.DataFrame([['mean'] + list(average_scale_error)], columns=index_row)], ignore_index=True)
 
-        precision_df.to_csv(precision_file, index=False)
-        recall_df.to_csv(recall_file, index=False)
-        translation_error_df.to_csv(translation_error_file, index=False)
-        scale_error_df.to_csv(scale_error_file, index=False)
+        precision_df.to_csv(precision_file, index=False, mode='a')
+        recall_df.to_csv(recall_file, index=False, mode='a')
+        translation_error_df.to_csv(translation_error_file, index=False, mode='a')
+        scale_error_df.to_csv(scale_error_file, index=False, mode='a')
 
     evaluation_results_dtype = [
         ('thresholds', 'f4', len(euclidean_distance_thresholds)),
