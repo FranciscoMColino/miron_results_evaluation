@@ -143,4 +143,4 @@ evaluation_data:
 geometry_mode: 3d
 results_recording:
   enabled: true
-  output_dir: detection_evaluation/results/noise_track_comparison/multi_eucdist-ermis_det-dynamic_full_occlusion-people_only-t1
+  output_dir: detection_evaluation/results/noise_track_comparison/multi_eucdist-ermis_det_1-dynamic_full_occlusion-all-t1

@@ -1,4 +1,4 @@
-Results recording enabled. Results will be saved to: detection_evaluation/results/noise_track_comparison/multi_eucdist-ermis_det-dynamic_full_occlusion-people_only-t1
+Results recording enabled. Results will be saved to: detection_evaluation/results/noise_track_comparison/multi_eucdist-ermis_det_1-dynamic_full_occlusion-all-t1
 
 Evaluating data: ['MultiMediumBots-v1-t1', 'MultiMediumLargeBots-v1-t1', 'MultiMediumSmallBots-v1-t1', 'MultiMixed-v1-t1', 'MultiPeople-v1-t2', 'MultiPeople-v2-t1', 'MultiSmallBots-v1-t1', 'SingleLargeForkliftB-v1-t1', 'SingleLargeForkliftC-v1-t1', 'SingleMediumCarter-v1-t1', 'SingleMediumJackal-v1-t1', 'SingleMediumJackal-v1-t2', 'SingleMediumTransporter-v1-t1', 'SinglePerson-v1-t1', 'SinglePerson-v2-t1', 'SinglePerson-v3-t1', 'SinglePerson-v4-t1', 'SingleSmallJetbot-v1-t5', 'SingleSmallKaya-v1-t1']
 
