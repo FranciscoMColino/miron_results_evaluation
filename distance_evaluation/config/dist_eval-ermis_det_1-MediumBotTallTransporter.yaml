@@ -1,0 +1,23 @@
+euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.0]
+euclidean_distance_main_threshold: 2.0
+
+geometry_mode: '3d'
+
+camera_position: [-9.91, 4.97, 0.5]
+camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
+
+results_recording:
+  enabled: True
+  output_dir: 'distance_evaluation/results/tests/dist_eval-ermis_det_1-MediumBotTallTransporter-t1'
+
+evaluation_data:
+  {
+    name_id: 'MultiMediumBots-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/distance_variation/MediumBotTallTransporter-v1-t1-det1',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/distance_variation/MediumBotTallTransporter-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 7,
+    synthetic_fps: 30,
+  }
+
+playback_speed: 1.0
