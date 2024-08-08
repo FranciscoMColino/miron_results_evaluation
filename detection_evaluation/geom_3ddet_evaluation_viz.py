@@ -36,6 +36,27 @@ def draw_centroid(vis, centroid, color):
     sphere.paint_uniform_color(color)
     sphere.translate(centroid)
     vis.add_geometry(sphere, reset_bounding_box=False)
+"""
+summarizes the precision-recall curve and is calculated by integrating precision over the range of recall values
+"""
+def calculate_ap(recall, precision):
+    recall = np.array(recall)
+    precision = np.array(precision)
+    
+    # Append sentinel values at the end
+    recall = np.concatenate(([0], recall, [1]))
+    precision = np.concatenate(([0], precision, [0]))
+    
+    # Ensure precision is non-increasing
+    for i in range(len(precision) - 2, -1, -1):
+        precision[i] = max(precision[i], precision[i + 1])
+    
+    # Calculate AP
+    ap = 0.0
+    for i in range(1, len(recall)):
+        ap += (recall[i] - recall[i - 1]) * precision[i]
+    
+    return ap
 
 def evaluate_visualize_data(config_data, o3d_visualizer):
 
@@ -263,6 +284,9 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     pretty_print_evaluation_results(final_evaluation_results)
 
     print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
+
+    ap_values = calculate_ap(average_recall, average_precision)
+    print(f"\nAverage Precision: {ap_values:.2f}")
 
 def main():
     parser = argparse.ArgumentParser(description='Visualize detection and synthetic data')
