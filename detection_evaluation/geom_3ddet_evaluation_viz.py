@@ -157,14 +157,6 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
             synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
-            """
-                For every IoU threshold, associate the detections with the synthetic data
-                the metrics to be calculated are:
-                - Precision
-                - IoU
-                - Recall
-            """
-
             # check if every coordinate from assoc bounds is within 50m, if not, don't evaluate this frame
             for bound in synthetic_assoc_bounds:
                 if np.any(np.abs(bound) > 5000):
