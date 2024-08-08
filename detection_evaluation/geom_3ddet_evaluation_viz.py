@@ -67,8 +67,11 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     synthetic_fps = config_data['evaluation_data']['synthetic_fps']
     camera_position = np.array(config_data['camera_position'])
     camera_rotation = np.array(config_data['camera_rotation'])
-    iou_thresholds = config_data['iou_thresholds']
+    iou_thresholds = np.array(config_data['iou_thresholds'])
     playback_speed = config_data['playback_speed']
+
+    # sort iou thresholds in ascending order
+    iou_thresholds.sort()
 
     ### Load detection data
     detection_bbox = Detection3dBbox(detection_data_path)
