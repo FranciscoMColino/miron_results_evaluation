@@ -98,14 +98,12 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     o3d_visualizer.vis.register_key_callback(256, exit_key_callback)  # ESC key
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
-    
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4')]
-    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
+
+    precision_values = [[] for _ in iou_thresholds]
+    recall_values = [[] for _ in iou_thresholds]
+    iou_values = [[] for _ in iou_thresholds]
 
     analysed_frames = 0
-    match_ocurred_per_threshould = np.zeros((len(iou_thresholds),), dtype=int)
-
-    avg_frame_iou_collection = np.zeros((len(detection_bbox.complete_timestamps),), dtype='f4')
 
     while not exit:
         if run:
@@ -142,33 +140,30 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
                 - Recall
             """
 
+            # check if every coordinate from assoc bounds is within 50m, if not, don't evaluate this frame
             
-            frame_results = np.zeros((len(iou_thresholds),), dtype=frame_results_dtype)
 
-            _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
-            avg_frame_iou = np.mean(frame_iou)
-            avg_frame_iou_collection[analysed_frames] = avg_frame_iou
-
-            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
+            print(f"\nFrame {analysed_frames}")
 
             for j, iou_threshold in enumerate(iou_thresholds):
-                matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
+                matches, unmatched_detections, unmatched_synthetic, iou_matches = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
                 true_positives = len(matches)
                 false_positives = len(unmatched_detections)
                 ground_truth_count = len(synthetic_assoc_bounds)
 
                 precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
                 recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-                iou = np.mean(iou_values) if len(iou_values) > 0 else -1
+                iou = np.mean(iou_matches) if len(iou_matches) > 0 else -1
 
-                match_ocurred_per_threshould[j] += 1 if true_positives > 0 else 0
+                precision_values[j].append(precision)
+                recall_values[j].append(recall)
+                if iou > 0:
+                    iou_values[j].append(iou)
 
-                frame_results[j] = (precision, recall, iou)
                 # print rounded to 2 decimal places
                 print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}")
 
             
-            results_collection[analysed_frames] = frame_results
             analysed_frames += 1
 
             detection_centroids = [get_centroid_from_points(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
@@ -233,24 +228,10 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     o3d_visualizer.vis.destroy_window()
 
     # strip the zeros from the results collection
-    results_collection = results_collection[:analysed_frames]
-
-    precision_values = [[] for _ in iou_thresholds]
-    recall_values = [[] for _ in iou_thresholds]
-    iou_values = [[] for _ in iou_thresholds]
-
-    for frame_results in results_collection:
-        for i, (precision, recall, iou) in enumerate(frame_results):
-            precision_values[i].append(precision)
-            recall_values[i].append(recall)
-            if iou > 0:
-                iou_values[i].append(iou)
 
     average_precision = np.array([np.mean(values) for values in precision_values])
     average_recall = np.array([np.mean(values) for values in recall_values])
     average_iou = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in iou_values])
-
-    avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
 
     evaluation_results_dtype = [
         ('thresholds' , 'f4', len(iou_thresholds)),
