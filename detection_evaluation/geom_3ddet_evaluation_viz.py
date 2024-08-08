@@ -143,8 +143,8 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
 
             # check if every coordinate from assoc bounds is within 50m, if not, don't evaluate this frame
             for bound in synthetic_assoc_bounds:
-                if np.any(np.abs(bound) > 50):
-                    print(f"\nFrame {analysed_frames} has a synthetic coord outside the 50m range, skipping")
+                if np.any(np.abs(bound) > 5000):
+                    print(f"\nFrame {analysed_frames} has a synthetic coord outside the 5000m range, skipping")
                     skipped_frames += 1
                     continue
 
