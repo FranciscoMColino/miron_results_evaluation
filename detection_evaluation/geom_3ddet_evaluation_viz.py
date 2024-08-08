@@ -104,6 +104,7 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
     iou_values = [[] for _ in iou_thresholds]
 
     analysed_frames = 0
+    skipped_frames = 0
 
     while not exit:
         if run:
@@ -141,7 +142,11 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
             """
 
             # check if every coordinate from assoc bounds is within 50m, if not, don't evaluate this frame
-            
+            for bound in synthetic_assoc_bounds:
+                if np.any(np.abs(bound) > 50):
+                    print(f"\nFrame {analysed_frames} has a synthetic coord outside the 50m range, skipping")
+                    skipped_frames += 1
+                    continue
 
             print(f"\nFrame {analysed_frames}")
 
@@ -252,6 +257,8 @@ def evaluate_visualize_data(config_data, o3d_visualizer):
         for name in results.dtype.names:
             values = results[name]
             print(f"{name.capitalize()}: {['{:.2f}'.format(val) for val in values]}")
+
+    print(f"\nAnalysed frames: {analysed_frames}, Skipped frames: {skipped_frames}")
 
     pretty_print_evaluation_results(final_evaluation_results)
 
