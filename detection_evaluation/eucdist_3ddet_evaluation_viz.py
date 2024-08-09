@@ -269,25 +269,24 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
 
     o3d_visualizer.vis.destroy_window()
 
-    # strip the zeros from the results collection
 
-    average_precision = np.array([np.mean(values) for values in precision_values])
-    average_recall = np.array([np.mean(values) for values in recall_values])
-    average_translation_error = np.array([np.mean(values) for values in translation_error_values])
-    average_scale_error = np.array([np.mean(values) for values in scale_error_values])
+    mean_precision = np.array([np.mean(values) for values in precision_values])
+    mean_recall = np.array([np.mean(values) for values in recall_values])
+    mean_translation_error = np.array([np.mean(values) for values in translation_error_values])
+    mean_scale_error = np.array([np.mean(values) for values in scale_error_values])
 
     evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), 
-                                ('average_precision', 'f4', len(euclidean_distance_thresholds)),
-                                ('average_recall', 'f4', len(euclidean_distance_thresholds)),
-                                ('average_translation_error', 'f4', len(euclidean_distance_thresholds)),
-                                ('average_scale_error', 'f4', len(euclidean_distance_thresholds))]
+                                ('precision', 'f4', len(euclidean_distance_thresholds)),
+                                ('recall', 'f4', len(euclidean_distance_thresholds)),
+                                ('translation_error', 'f4', len(euclidean_distance_thresholds)),
+                                ('scale_error', 'f4', len(euclidean_distance_thresholds))]
 
     final_evaluation_results = np.array((
         euclidean_distance_thresholds,
-        average_precision,
-        average_recall,
-        average_translation_error,
-        average_scale_error
+        mean_precision,
+        mean_recall,
+        mean_translation_error,
+        mean_scale_error
     ), dtype=evaluation_results_dtype)
 
     if verbose:
@@ -302,7 +301,7 @@ def eucdist_vismatch_3ddet_data(config_data, o3d_visualizer, verbose=True):
         pretty_print_evaluation_results(final_evaluation_results)
         print(f"\nFinal evaluation results dtype: {final_evaluation_results.dtype}")
 
-    ap_values = calculate_ap(average_recall, average_precision)
+    ap_values = calculate_ap(mean_recall, mean_precision)
     if verbose:
         print(f"\nAverage Precision: {ap_values:.2f}")
 
