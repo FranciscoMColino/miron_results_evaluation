@@ -17,7 +17,7 @@ def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
     min_coords = np.min(bbox, axis=0)
     max_coords = np.max(bbox, axis=0)
-    return [min_coords[0], min_coords[1], min_coords[2], max_coords[0], max_coords[1], max_coords[2]]
+    return np.concatenate((min_coords, max_coords))
 
 def calculate_ap(recall, precision):
     recall = np.array(recall)
@@ -84,6 +84,7 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
 
     analysed_frames = 0
     skipped_frames = 0
+
     for i in range(range_start, range_end + 1):
 
         current_detection_timestamp = detection_bbox.complete_timestamps[i - range_start]
@@ -154,7 +155,6 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
                 translation_error_values[j].append(translation_error)
             if not math.isnan(scale_error):
                 scale_error_values[j].append(scale_error)
-
 
             if verbose:
                 print(f"Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")

@@ -4,6 +4,7 @@ import yaml
 import numpy as np
 import math
 import datetime
+import pandas as pd
 
 from detection_evaluation.eucdist_3ddet_evaluation import eucdist_evaluate_3ddet_data
 
@@ -19,6 +20,25 @@ def print_log(message, log_file=None):
     if log_file is not None:
         with open(log_file, 'a') as f:
             f.write(message + '\n')
+
+def calculate_ap(recall, precision):
+    recall = np.array(recall)
+    precision = np.array(precision)
+    
+    # Append sentinel values at the end
+    recall = np.concatenate(([0], recall, [1]))
+    precision = np.concatenate(([0], precision, [0]))
+    
+    # Ensure precision is non-increasing
+    for i in range(len(precision) - 2, -1, -1):
+        precision[i] = max(precision[i], precision[i + 1])
+    
+    # Calculate AP
+    ap = 0.0
+    for i in range(1, len(recall)):
+        ap += (recall[i] - recall[i - 1]) * precision[i]
+    
+    return ap
 
 def multi_eval_record(config_data):
 
@@ -38,6 +58,27 @@ def multi_eval_record(config_data):
         logging_file = os.path.join(results_recording_output_dir, 'log.txt')
         config_copy_file = os.path.join(results_recording_output_dir, 'config_copy.yaml')
         metadata_file = os.path.join(results_recording_output_dir, 'metadata.yaml')
+        # csv file for each of the metrics
+        precision_file = os.path.join(results_recording_output_dir, 'precision.csv')
+        recall_file = os.path.join(results_recording_output_dir, 'recall.csv')
+        translation_error_file = os.path.join(results_recording_output_dir, 'translation_error.csv')
+        scale_error_file = os.path.join(results_recording_output_dir, 'scale_error.csv')
+
+        index_row = np.concatenate((['name_id'], config_data['euclidean_distance_thresholds']))
+
+        with open(precision_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(recall_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(translation_error_file, 'w') as file:
+            file.write('sep=,\n')
+        with open(scale_error_file, 'w') as file:
+            file.write('sep=,\n')
+
+        precision_df = pd.DataFrame(columns=index_row)
+        recall_df = pd.DataFrame(columns=index_row)
+        translation_error_df = pd.DataFrame(columns=index_row)
+        scale_error_df = pd.DataFrame(columns=index_row)
 
         with open(config_copy_file, 'w') as file:
             yaml.dump(config_data, file)
@@ -81,7 +122,24 @@ def multi_eval_record(config_data):
         results_str = pretty_str_evaluation_results(results)
         print_log(results_str, logging_file)
 
+        precision = results['precision']
+        recall = results['recall']
+
+        ap = calculate_ap(recall, precision)
+        print_log(f"Average Precision: {ap:.2f}", logging_file)
+        
         sims_results.append(results)
+
+        if results_recording_enabled:
+            precision_values = np.concatenate(([data['name_id']], results['precision']))
+            recall_values = np.concatenate(([data['name_id']], results['recall']))
+            translation_error_values = np.concatenate(([data['name_id']], results['translation_error']))
+            scale_error_values = np.concatenate(([data['name_id']], results['scale_error']))
+
+            precision_df = pd.concat([precision_df, pd.DataFrame([precision_values], columns=index_row)], ignore_index=True)
+            recall_df = pd.concat([recall_df, pd.DataFrame([recall_values], columns=index_row)], ignore_index=True)
+            translation_error_df = pd.concat([translation_error_df, pd.DataFrame([translation_error_values], columns=index_row)], ignore_index=True)
+            scale_error_df = pd.concat([scale_error_df, pd.DataFrame([scale_error_values], columns=index_row)], ignore_index=True)
 
     # calculate average results for all data
 
@@ -110,6 +168,17 @@ def multi_eval_record(config_data):
     average_recall = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in recall_values])
     average_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
     average_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
+
+    if results_recording_enabled:
+        precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(average_precision)], columns=index_row)], ignore_index=True)
+        recall_df = pd.concat([recall_df, pd.DataFrame([['mean'] + list(average_recall)], columns=index_row)], ignore_index=True)
+        translation_error_df = pd.concat([translation_error_df, pd.DataFrame([['mean'] + list(average_translation_error)], columns=index_row)], ignore_index=True)
+        scale_error_df = pd.concat([scale_error_df, pd.DataFrame([['mean'] + list(average_scale_error)], columns=index_row)], ignore_index=True)
+
+        precision_df.to_csv(precision_file, index=False, mode='a')
+        recall_df.to_csv(recall_file, index=False, mode='a')
+        translation_error_df.to_csv(translation_error_file, index=False, mode='a')
+        scale_error_df.to_csv(scale_error_file, index=False, mode='a')
 
     evaluation_results_dtype = [
         ('thresholds', 'f4', len(euclidean_distance_thresholds)),

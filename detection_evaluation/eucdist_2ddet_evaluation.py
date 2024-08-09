@@ -13,19 +13,30 @@ from common.data_control.utils import *
 
 from detection_evaluation.association import *
 
-
 def get_bbox_extremes(bbox):
     bbox = np.array(bbox)
     min_coords = np.min(bbox, axis=0)
     max_coords = np.max(bbox, axis=0)
     return np.concatenate((min_coords, max_coords))
 
-def draw_centroid(vis, centroid, color):
-    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05)
-    sphere.compute_vertex_normals()
-    sphere.paint_uniform_color(color)
-    sphere.translate(centroid)
-    vis.add_geometry(sphere, reset_bounding_box=False)
+def calculate_ap(recall, precision):
+    recall = np.array(recall)
+    precision = np.array(precision)
+    
+    # Append sentinel values at the end
+    recall = np.concatenate(([0], recall, [1]))
+    precision = np.concatenate(([0], precision, [0]))
+    
+    # Ensure precision is non-increasing
+    for i in range(len(precision) - 2, -1, -1):
+        precision[i] = max(precision[i], precision[i + 1])
+    
+    # Calculate AP
+    ap = 0.0
+    for i in range(1, len(recall)):
+        ap += (recall[i] - recall[i - 1]) * precision[i]
+    
+    return ap
 
 def eucdist_evaluate_2ddet_data(config_data, verbose=False):
 
@@ -39,6 +50,8 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
     synthetic_fps = config_data['synthetic_fps']
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
     geometry_mode = config_data['geometry_mode']
+    # sort euclidean distance thresholds in descending order
+    euclidean_distance_thresholds = np.sort(euclidean_distance_thresholds)[::-1]
 
     # Load detection data    
     if geometry_mode == '2d':
@@ -70,13 +83,13 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
     range_end = detection_data_range[1]
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
-    
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('translation_error', 'f4'), ('scale_error', 'f4')]
-    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(euclidean_distance_thresholds)), dtype=frame_results_dtype)
+    precision_values = [[] for _ in euclidean_distance_thresholds]
+    recall_values = [[] for _ in euclidean_distance_thresholds]
+    translation_error_values = [[] for _ in euclidean_distance_thresholds]
+    scale_error_values = [[] for _ in euclidean_distance_thresholds]
 
     analysed_frames = 0
-
-    avg_frame_iou_collection = np.zeros((len(detection_bbox.complete_timestamps),), dtype='f4')
+    skipped_frames = 0
 
     for i in range(range_start, range_end + 1):
 
@@ -99,7 +112,14 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
         detection_2d_centers = np.asarray([centroid[:2] for centroid in detection_centroids])
         synthetic_2d_centers = np.asarray([centroid[:2] for centroid in synthetic_centroids])
 
-        frame_results = np.zeros(len(euclidean_distance_thresholds), dtype=frame_results_dtype)
+        synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_2d_bboxes[synthetic_frame]]
+
+        for bound in synthetic_assoc_bounds:
+            if np.any(np.abs(bound) > 5000):
+                if verbose:
+                    print(f"\nFrame {analysed_frames} has a synthetic coord outside the 5000m range, skipping")
+                skipped_frames += 1
+                continue
 
         if verbose:
             print(f"\nFrame {analysed_frames}")
@@ -133,38 +153,22 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
 
             scale_error = 1 - np.mean(scale_error_iou_values)
 
-            frame_results[j] = (precision, recall, translation_error, scale_error)
+            precision_values[j].append(precision)
+            recall_values[j].append(recall)
+            if not math.isnan(translation_error):
+                translation_error_values[j].append(translation_error)
+            if not math.isnan(scale_error):
+                scale_error_values[j].append(scale_error)
 
             if verbose:
                 print(f"Threshold {euclidean_dist_treshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, Translation Error: {translation_error:.2f}, Scale Error: {scale_error:.2f}")
-        
-        results_collection[analysed_frames] = frame_results
+
         analysed_frames += 1
 
-    # strip the zeros from the results collection
-    results_collection = results_collection[:analysed_frames]
-
-    precision_values = [[] for _ in euclidean_distance_thresholds]
-    recall_values = [[] for _ in euclidean_distance_thresholds]
-    translation_error_values = [[] for _ in euclidean_distance_thresholds]
-    scale_error_values = [[] for _ in euclidean_distance_thresholds]
-
-    for frame_results in results_collection:
-        for i, (precision, recall, translation_error, scale_error) in enumerate(frame_results):
-            precision_values[i].append(precision)
-            recall_values[i].append(recall)
-            # if not nan 
-            if not math.isnan(translation_error):
-                translation_error_values[i].append(translation_error)
-            if not math.isnan(scale_error):
-                scale_error_values[i].append(scale_error)
-
-    average_precision = np.array([np.mean(values) for values in precision_values])
-    average_recall = np.array([np.mean(values) for values in recall_values])
-    average_translation_error = np.array([np.mean(values) for values in translation_error_values])
-    average_scale_error = np.array([np.mean(values) for values in scale_error_values])
-
-    avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
+    mean_precision = np.array([np.mean(values) for values in precision_values])
+    mean_recall = np.array([np.mean(values) for values in recall_values])
+    mean_translation_error = np.array([np.mean(values) for values in translation_error_values])
+    mean_scale_error = np.array([np.mean(values) for values in scale_error_values])
 
     evaluation_results_dtype = [('thresholds' , 'f4', len(euclidean_distance_thresholds)), 
                                 ('precision', 'f4', len(euclidean_distance_thresholds)),
@@ -174,10 +178,10 @@ def eucdist_evaluate_2ddet_data(config_data, verbose=False):
 
     final_evaluation_results = np.array((
         euclidean_distance_thresholds,
-        average_precision,
-        average_recall,
-        average_translation_error,
-        average_scale_error
+        mean_precision,
+        mean_recall,
+        mean_translation_error,
+        mean_scale_error
     ), dtype=evaluation_results_dtype)
 
     if verbose:

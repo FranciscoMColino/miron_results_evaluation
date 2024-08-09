@@ -21,6 +21,25 @@ def print_log(message, log_file=None):
         with open(log_file, 'a') as f:
             f.write(message + '\n')
 
+def calculate_ap(recall, precision):
+    recall = np.array(recall)
+    precision = np.array(precision)
+    
+    # Append sentinel values at the end
+    recall = np.concatenate(([0], recall, [1]))
+    precision = np.concatenate(([0], precision, [0]))
+    
+    # Ensure precision is non-increasing
+    for i in range(len(precision) - 2, -1, -1):
+        precision[i] = max(precision[i], precision[i + 1])
+    
+    # Calculate AP
+    ap = 0.0
+    for i in range(1, len(recall)):
+        ap += (recall[i] - recall[i - 1]) * precision[i]
+    
+    return ap
+
 def multi_eval_record(config_data):
 
     results_recording_enabled = config_data['results_recording']['enabled']
@@ -88,6 +107,7 @@ def multi_eval_record(config_data):
     print_log(f"\nEvaluating data: {evaluation_data_name_ids}", logging_file)
 
     sims_results = []
+    sims_ap_values = []
 
     for data in evaluation_data:
         print_log(f"\nEvaluating data: {data['name_id']}", logging_file)
@@ -99,6 +119,15 @@ def multi_eval_record(config_data):
         results = eucdist_evaluate_2ddet_data(data, verbose=False)
         results_str = pretty_str_evaluation_results(results)
         print_log(results_str, logging_file)
+
+        precision = results['precision']
+        recall = results['recall']
+
+        ap = calculate_ap(recall, precision)
+        print_log(f"Average Precision: {ap:.2f}", logging_file)
+
+        sims_ap_values.append(ap)
+        
         sims_results.append(results)
 
         if results_recording_enabled:
@@ -135,16 +164,17 @@ def multi_eval_record(config_data):
             if not math.isnan(value):
                 scale_error_values[i].append(value)
 
-    average_precision = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in precision_values])
-    average_recall = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in recall_values])
-    average_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
-    average_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
+    mean_precision = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in precision_values])
+    mean_recall = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in recall_values])
+    mean_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
+    mean_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
+    mean_ap = np.mean(sims_ap_values)
 
     if results_recording_enabled:
-        precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(average_precision)], columns=index_row)], ignore_index=True)
-        recall_df = pd.concat([recall_df, pd.DataFrame([['mean'] + list(average_recall)], columns=index_row)], ignore_index=True)
-        translation_error_df = pd.concat([translation_error_df, pd.DataFrame([['mean'] + list(average_translation_error)], columns=index_row)], ignore_index=True)
-        scale_error_df = pd.concat([scale_error_df, pd.DataFrame([['mean'] + list(average_scale_error)], columns=index_row)], ignore_index=True)
+        precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(mean_precision)], columns=index_row)], ignore_index=True)
+        recall_df = pd.concat([recall_df, pd.DataFrame([['mean'] + list(mean_recall)], columns=index_row)], ignore_index=True)
+        translation_error_df = pd.concat([translation_error_df, pd.DataFrame([['mean'] + list(mean_translation_error)], columns=index_row)], ignore_index=True)
+        scale_error_df = pd.concat([scale_error_df, pd.DataFrame([['mean'] + list(mean_scale_error)], columns=index_row)], ignore_index=True)
 
         precision_df.to_csv(precision_file, index=False, mode='a')
         recall_df.to_csv(recall_file, index=False, mode='a')
@@ -161,14 +191,16 @@ def multi_eval_record(config_data):
 
     final_evaluation_results = np.array((
         euclidean_distance_thresholds,
-        average_precision,
-        average_recall,
-        average_translation_error,
-        average_scale_error
+        mean_precision,
+        mean_recall,
+        mean_translation_error,
+        mean_scale_error
     ), dtype=evaluation_results_dtype)
 
     print_log(f"\n Mean Average Results:", logging_file)
     print_log(pretty_str_evaluation_results(final_evaluation_results), logging_file)
+
+    print_log(f"\nMean Average Precision: {mean_ap:.2f}", logging_file)
 
 
 def main():
