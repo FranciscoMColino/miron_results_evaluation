@@ -102,6 +102,7 @@ def multi_eval_record(config_data):
         raise ValueError("Geometry mode must be 3d")
     
     euclidean_distance_thresholds = config_data['euclidean_distance_thresholds']
+    euclidean_distance_thresholds = np.sort(np.array(euclidean_distance_thresholds))[::-1]
     camera_position = config_data['camera_position']
     camera_rotation = config_data['camera_rotation']
 
@@ -110,7 +111,8 @@ def multi_eval_record(config_data):
     print_log(f"\nEvaluating data: {evaluation_data_name_ids}", logging_file)
 
     sims_results = []
-
+    sims_ap_values = [[] for _ in euclidean_distance_thresholds]
+ 
     for data in evaluation_data:
         print_log(f"\nEvaluating data: {data['name_id']}", logging_file)
         data['euclidean_distance_thresholds'] = euclidean_distance_thresholds
@@ -125,8 +127,14 @@ def multi_eval_record(config_data):
         precision = results['precision']
         recall = results['recall']
 
-        ap = calculate_ap(recall, precision)
-        print_log(f"Average Precision: {ap:.2f}", logging_file)
+        for i in range(0, len(euclidean_distance_thresholds)):
+            c_recall = recall[0:i+1]
+            c_precision = precision[0:i+1]
+            ap = calculate_ap(c_recall, c_precision)
+            sims_ap_values[i].append(ap)
+
+        #{['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}
+        print_log(f"Average Precision: {['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}", logging_file)
         
         sims_results.append(results)
 
@@ -168,6 +176,7 @@ def multi_eval_record(config_data):
     average_recall = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in recall_values])
     average_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
     average_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
+    mean_ap = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in sims_ap_values])
 
     if results_recording_enabled:
         precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(average_precision)], columns=index_row)], ignore_index=True)
@@ -198,6 +207,8 @@ def multi_eval_record(config_data):
 
     print_log(f"\n Mean Average Results:", logging_file)
     print_log(pretty_str_evaluation_results(final_evaluation_results), logging_file)
+
+    print_log(f"Average Precision: {['{:.2f}'.format(ap) for ap in mean_ap]}", logging_file)
 
 
 def main():

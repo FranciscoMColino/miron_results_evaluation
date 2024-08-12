@@ -1,5 +1,4 @@
-#euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.]
-euclidean_distance_thresholds: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.]
+euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.]
 
 geometry_mode: '3d'
 
@@ -8,12 +7,12 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/temp_ap_comp/multi_eucdist_2ddet-ermis_det_1-dynamic_no_occlusion-all-t1'
+  output_dir: 'detection_evaluation/results/temp_ap_comp/multi_eucdist_3ddet-ermis_det_3-dynamic_no_occlusion-all-t1'
 
 evaluation_data: [
   {
     name_id: 'MultiMediumBots-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiMediumBots-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiMediumBots-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiMediumBots-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 7,
@@ -21,7 +20,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiMediumLargeBots-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiMediumLargeBots-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiMediumLargeBots-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiMediumLargeBots-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -29,7 +28,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiMediumSmallBots-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiMediumSmallBots-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiMediumSmallBots-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiMediumSmallBots-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -37,7 +36,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiMixed-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiMixed-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiMixed-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiMixed-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -45,7 +44,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiPeople-v1-t2',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiPeople-v1-t2-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiPeople-v1-t2-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiPeople-v1-t2',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -53,7 +52,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiPeople-v2-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiPeople-v2-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiPeople-v2-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiPeople-v2-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -61,7 +60,7 @@ evaluation_data: [
   },
   {
     name_id: 'MultiSmallBots-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/MultiSmallBots-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiSmallBots-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiSmallBots-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -69,7 +68,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleLargeForkliftB-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 7,
@@ -77,7 +76,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleLargeForkliftC-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 7,
@@ -85,7 +84,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleMediumCarter-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumCarter-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleMediumCarter-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumCarter-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -93,7 +92,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleMediumJackal-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumJackal-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleMediumJackal-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumJackal-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -101,7 +100,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleMediumJackal-v1-t2',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumJackal-v1-t2-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleMediumJackal-v1-t2-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumJackal-v1-t2',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -109,7 +108,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleMediumTransporter-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleMediumTransporter-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleMediumTransporter-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleMediumTransporter-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -117,7 +116,7 @@ evaluation_data: [
   },
   {
     name_id: 'SinglePerson-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SinglePerson-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -125,7 +124,7 @@ evaluation_data: [
   },
   {
     name_id: 'SinglePerson-v2-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SinglePerson-v2-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v2-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v2-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -133,7 +132,7 @@ evaluation_data: [
   },
   {
     name_id: 'SinglePerson-v3-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SinglePerson-v3-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v3-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v3-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -141,7 +140,7 @@ evaluation_data: [
   },
   {
     name_id: 'SinglePerson-v4-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SinglePerson-v4-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v4-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v4-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -149,7 +148,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleSmallJetbot-v1-t5',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleSmallJetbot-v1-t5-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleSmallJetbot-v1-t5-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleSmallJetbot-v1-t5',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
@@ -157,7 +156,7 @@ evaluation_data: [
   },
   {
     name_id: 'SingleSmallKaya-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleSmallKaya-v1-t1-det1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleSmallKaya-v1-t1-erm3',
     synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleSmallKaya-v1-t1',
     detection_frame_offset: 0,
     synthetic_frame_offset: 6,
