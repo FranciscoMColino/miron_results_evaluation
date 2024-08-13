@@ -8,11 +8,14 @@ import pandas as pd
 
 from detection_evaluation.eucdist_3ddet_evaluation import eucdist_evaluate_3ddet_data
 
-def pretty_str_evaluation_results(results):
+FIXED_PRETTY_PRINT_LENGTH = 20
+
+def pretty_str_evaluation_results(results, fixed_length=FIXED_PRETTY_PRINT_LENGTH):
     result_str = "\nFinal Evaluation Results:\n"
     for name in results.dtype.names:
         values = results[name]
-        result_str += f"{name.capitalize()}: {['{:.2f}'.format(val) for val in values]}\n"
+        name_str = f"{name.capitalize()}:".ljust(fixed_length)
+        result_str += f"{name_str} {['{:.2f}'.format(val) for val in values]}\n"
     return result_str
 
 def print_log(message, log_file=None):
@@ -134,7 +137,8 @@ def multi_eval_record(config_data):
             sims_ap_values[i].append(ap)
 
         #{['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}
-        print_log(f"Average Precision: {['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}", logging_file)
+        name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+        print_log(f"{name_str} {['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}", logging_file)
         
         sims_results.append(results)
 
@@ -208,7 +212,8 @@ def multi_eval_record(config_data):
     print_log(f"\n Mean Average Results:", logging_file)
     print_log(pretty_str_evaluation_results(final_evaluation_results), logging_file)
 
-    print_log(f"Average Precision: {['{:.2f}'.format(ap) for ap in mean_ap]}", logging_file)
+    name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+    print_log(f"{name_str} {['{:.2f}'.format(ap) for ap in mean_ap]}", logging_file)
 
 
 def main():

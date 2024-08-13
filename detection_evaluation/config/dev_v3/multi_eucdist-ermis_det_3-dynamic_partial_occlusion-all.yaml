@@ -1,0 +1,62 @@
+euclidean_distance_thresholds: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.]
+
+geometry_mode: '3d'
+
+camera_position: [-9.91, 4.97, 0.5]
+camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
+
+results_recording:
+  enabled: True
+  output_dir: 'detection_evaluation/results/temp_ap_comp/multi_eucdist_3ddet-ermis_det_3-dynamic_partial_occlusion-all-t1'
+
+evaluation_data: [
+  {
+    name_id: 'SingleLargeBotMediumBotOcc-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SingleLargeBotMediumBotOcc-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SingleLargeBotMediumBotOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 6,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'SingleLargeBotPersonOcc-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SingleLargeBotPersonOcc-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SingleLargeBotPersonOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 6,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'SingleMediumBotSmallBotOcc-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SingleMediumBotSmallBotOcc-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SingleMediumBotSmallBotOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 5,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'SinglePersonMediumBotOcc-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SinglePersonMediumBotOcc-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SinglePersonMediumBotOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 5,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'SinglePersonMediumBotOcc-v2-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SinglePersonMediumBotOcc-v2-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SinglePersonMediumBotOcc-v2-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 5,
+    synthetic_fps: 30,
+  },
+  {
+    name_id: 'SinglePersonMultiMediumBotsOcc-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_partial_occlusion/SinglePersonMultiMediumBotsOcc-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_partial_occlusion/SinglePersonMultiMediumBotsOcc-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 5,
+    synthetic_fps: 30,
+  }
+]
+

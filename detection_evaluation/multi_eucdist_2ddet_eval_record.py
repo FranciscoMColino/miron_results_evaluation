@@ -8,11 +8,14 @@ import pandas as pd
 
 from detection_evaluation.eucdist_2ddet_evaluation import eucdist_evaluate_2ddet_data
 
-def pretty_str_evaluation_results(results):
+FIXED_PRETTY_PRINT_LENGTH = 20
+
+def pretty_str_evaluation_results(results, fixed_length=FIXED_PRETTY_PRINT_LENGTH):
     result_str = "\nFinal Evaluation Results:\n"
     for name in results.dtype.names:
         values = results[name]
-        result_str += f"{name.capitalize()}: {['{:.2f}'.format(val) for val in values]}\n"
+        name_str = f"{name.capitalize()}:".ljust(fixed_length)
+        result_str += f"{name_str} {['{:.2f}'.format(val) for val in values]}\n"
     return result_str
 
 def print_log(message, log_file=None):
@@ -107,7 +110,7 @@ def multi_eval_record(config_data):
     print_log(f"\nEvaluating data: {evaluation_data_name_ids}", logging_file)
 
     sims_results = []
-    sims_ap_values = []
+    sims_ap_values = [[] for _ in euclidean_distance_thresholds]
 
     for data in evaluation_data:
         print_log(f"\nEvaluating data: {data['name_id']}", logging_file)
@@ -123,10 +126,15 @@ def multi_eval_record(config_data):
         precision = results['precision']
         recall = results['recall']
 
-        ap = calculate_ap(recall, precision)
-        print_log(f"Average Precision: {ap:.2f}", logging_file)
+        for i in range(0, len(euclidean_distance_thresholds)):
+            c_recall = recall[0:i+1]
+            c_precision = precision[0:i+1]
+            ap = calculate_ap(c_recall, c_precision)
+            sims_ap_values[i].append(ap)
 
-        sims_ap_values.append(ap)
+        #{['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}
+        name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+        print_log(f"{name_str} {['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}", logging_file)
         
         sims_results.append(results)
 
@@ -168,7 +176,7 @@ def multi_eval_record(config_data):
     mean_recall = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in recall_values])
     mean_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
     mean_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
-    mean_ap = np.mean(sims_ap_values)
+    mean_ap = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in sims_ap_values])
 
     if results_recording_enabled:
         precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(mean_precision)], columns=index_row)], ignore_index=True)
@@ -200,7 +208,8 @@ def multi_eval_record(config_data):
     print_log(f"\n Mean Average Results:", logging_file)
     print_log(pretty_str_evaluation_results(final_evaluation_results), logging_file)
 
-    print_log(f"\nMean Average Precision: {mean_ap:.2f}", logging_file)
+    name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+    print_log(f"{name_str} {['{:.2f}'.format(ap) for ap in mean_ap]}", logging_file)
 
 
 def main():

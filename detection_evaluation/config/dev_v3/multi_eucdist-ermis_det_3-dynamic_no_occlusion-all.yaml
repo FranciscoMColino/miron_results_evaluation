@@ -138,14 +138,14 @@ evaluation_data: [
     synthetic_frame_offset: 6,
     synthetic_fps: 30,
   },
-  {
-    name_id: 'SinglePerson-v4-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v4-t1-erm3',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v4-t1',
-    detection_frame_offset: 0,
-    synthetic_frame_offset: 6,
-    synthetic_fps: 30,
-  },
+  #{
+  #  name_id: 'SinglePerson-v4-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SinglePerson-v4-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SinglePerson-v4-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 6,
+  #  synthetic_fps: 30,
+  #},
   {
     name_id: 'SingleSmallJetbot-v1-t5',
     detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleSmallJetbot-v1-t5-erm3',

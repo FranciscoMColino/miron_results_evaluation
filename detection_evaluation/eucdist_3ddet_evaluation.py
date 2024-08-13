@@ -126,7 +126,10 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
 
             precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
             recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-            translation_error = np.mean(dist_values)
+            if len(dist_values) > 0:
+                translation_error = np.mean(dist_values)
+            else:
+                translation_error = math.nan
 
             scale_error_iou_values = []
 
@@ -147,7 +150,10 @@ def eucdist_evaluate_3ddet_data(config_data, verbose=False):
                 iou_value = iou_3d(detection_extremes, synthetic_extremes)
                 scale_error_iou_values.append(iou_value)
 
-            scale_error = 1 - np.mean(scale_error_iou_values)
+            if len(matches) > 0:
+                scale_error = 1 - np.mean(scale_error_iou_values)
+            else:
+                scale_error = math.nan
 
             precision_values[j].append(precision)
             recall_values[j].append(recall)
