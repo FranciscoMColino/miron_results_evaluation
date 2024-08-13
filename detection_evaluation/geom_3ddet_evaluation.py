@@ -31,6 +31,9 @@ def geom_evaluate_3ddet_data(config_data, verbose=False):
     synthetic_fps = config_data['synthetic_fps']
     iou_thresholds = config_data['iou_thresholds']
 
+    # sort iou thresholds in ascending order
+    iou_thresholds.sort()
+
     # Load detection data    
     detection_bbox = Detection3dBbox(detection_data_path)
     detection_bbox.setup()
@@ -57,16 +60,14 @@ def geom_evaluate_3ddet_data(config_data, verbose=False):
 
     # evaluation results should hold the thresholds used, an array with the results for each frame, and the average results
     
-    frame_results_dtype = [('precision', 'f4'), ('recall', 'f4'), ('iou', 'f4')]
-    results_collection = np.zeros((len(detection_bbox.complete_timestamps), len(iou_thresholds)), dtype=frame_results_dtype)
+    precision_values = [[] for _ in iou_thresholds]
+    recall_values = [[] for _ in iou_thresholds]
+    iou_values = [[] for _ in iou_thresholds]
 
     analysed_frames = 0
-    match_ocurred_per_threshould = np.zeros((len(iou_thresholds),), dtype=int)
-
-    avg_frame_iou_collection = np.zeros((len(detection_bbox.complete_timestamps),), dtype='f4')
+    skipped_frames = 0
 
     for i in range(range_start, range_end + 1):
-        start_time = time.time()
 
         current_detection_timestamp = detection_bbox.complete_timestamps[i - range_start]
         delta_seconds = current_detection_timestamp['seconds'] - initial_detection_timestamp['seconds']
@@ -84,64 +85,40 @@ def geom_evaluate_3ddet_data(config_data, verbose=False):
         detection_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in detection_bbox.complete_bboxes[detection_frame]]
         synthetic_assoc_bounds = [get_bbox_extremes(bbox_points) for bbox_points in synthetic_bbox.complete_bboxes[synthetic_frame]]
 
-        """
-            For every IoU threshold, associate the detections with the synthetic data
-            the metrics to be calculated are:
-            - Precision
-            - IoU
-            - Recall
-        """
+        # check if every coordinate from assoc bounds is within 50m, if not, don't evaluate this frame
+        for bound in synthetic_assoc_bounds:
+            if np.any(np.abs(bound) > 5000):
+                if verbose:
+                    print(f"\nFrame {analysed_frames} has a synthetic coord outside the 5000m range, skipping")
+                skipped_frames += 1
+                continue
 
-        
-        frame_results = np.zeros((len(iou_thresholds),), dtype=frame_results_dtype)
-
-        _, _, _, frame_iou = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, 0)
-        avg_frame_iou = np.mean(frame_iou)
-        avg_frame_iou_collection[analysed_frames] = avg_frame_iou
-        
         if verbose:
-            print(f"\nFrame {analysed_frames}, Average IoU: {avg_frame_iou:.2f}")
+            print(f"\nFrame {analysed_frames}")
 
         for j, iou_threshold in enumerate(iou_thresholds):
-            matches, unmatched_detections, unmatched_synthetic, iou_values = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
+            matches, unmatched_detections, unmatched_synthetic, iou_matches = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
             true_positives = len(matches)
             false_positives = len(unmatched_detections)
             ground_truth_count = len(synthetic_assoc_bounds)
 
             precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
             recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-            iou = np.mean(iou_values) if len(iou_values) > 0 else -1
+            iou = np.mean(iou_matches) if len(iou_matches) > 0 else -1
 
-            match_ocurred_per_threshould[j] += 1 if true_positives > 0 else 0
-
-            frame_results[j] = (precision, recall, iou)
-            # print rounded to 2 decimal places
+            precision_values[j].append(precision)
+            recall_values[j].append(recall)
+            if iou > 0:
+                iou_values[j].append(iou)
+                    
             if verbose:
                 print(f"Threshold: {iou_threshold}, Precision: {precision:.2f}, Recall: {recall:.2f}, IoU: {iou:.2f}")
 
-        
-        results_collection[analysed_frames] = frame_results
         analysed_frames += 1
-
-    # strip the zeros from the results collection
-    results_collection = results_collection[:analysed_frames]
-
-    precision_values = [[] for _ in iou_thresholds]
-    recall_values = [[] for _ in iou_thresholds]
-    iou_values = [[] for _ in iou_thresholds]
-
-    for frame_results in results_collection:
-        for i, (precision, recall, iou) in enumerate(frame_results):
-            precision_values[i].append(precision)
-            recall_values[i].append(recall)
-            if iou > 0:
-                iou_values[i].append(iou)
 
     average_precision = np.array([np.mean(values) for values in precision_values])
     average_recall = np.array([np.mean(values) for values in recall_values])
     average_iou = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in iou_values])
-
-    avg_frame_iou_collection = avg_frame_iou_collection[:analysed_frames]
 
     evaluation_results_dtype = [
         ('thresholds' , 'f4', len(iou_thresholds)),
