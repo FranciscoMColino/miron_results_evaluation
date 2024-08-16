@@ -100,15 +100,17 @@ def geom_evaluate_3ddet_data(config_data, verbose=False):
             matches, unmatched_detections, unmatched_synthetic, iou_matches = associate_3d(detection_assoc_bounds, synthetic_assoc_bounds, iou_threshold)
             true_positives = len(matches)
             false_positives = len(unmatched_detections)
-            ground_truth_count = len(synthetic_assoc_bounds)
+            false_negatives = len(unmatched_synthetic)
 
-            precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
-            recall = true_positives / ground_truth_count if ground_truth_count > 0 else 0
-            iou = np.mean(iou_matches) if len(iou_matches) > 0 else -1
+            precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else math.nan
+            recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else math.nan
+            iou = np.mean(iou_matches) if len(iou_matches) > 0 else math.nan
 
-            precision_values[j].append(precision)
-            recall_values[j].append(recall)
-            if iou > 0:
+            if not math.isnan(precision):
+                precision_values[j].append(precision)
+            if not math.isnan(recall):
+                recall_values[j].append(recall)
+            if not math.isnan(iou):
                 iou_values[j].append(iou)
                     
             if verbose:

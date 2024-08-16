@@ -1,0 +1,96 @@
+camera_position:
+- -9.91
+- 4.97
+- 0.5
+camera_rotation:
+- - 1.0000000000000002
+  - 6.661338147750939e-16
+  - 2.220446049250313e-16
+- - -4.4408920985006257e-16
+  - -2.220446049250314e-16
+  - 1.0000000000000002
+- - 4.440892098500626e-16
+  - -1.0000000000000002
+  - -4.440892098500626e-16
+euclidean_distance_thresholds:
+- 0.1
+- 0.15
+- 0.2
+- 0.25
+- 0.375
+- 0.5
+- 0.75
+- 1.0
+- 1.5
+- 2.0
+evaluation_data:
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiLargeBots-v1-t1-erm3
+  name_id: MultiLargeBots-v1-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiLargeBots-v1-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiLargeBots-v2-t1-erm3
+  name_id: MultiLargeBots-v2-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiLargeBots-v2-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiMediumBots-v1-t1-erm3
+  name_id: MultiMediumBots-v1-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiMediumBots-v1-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiMediumBots-v2-t1-erm3
+  name_id: MultiMediumBots-v2-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiMediumBots-v2-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiMediumBots-v3-t1-erm3
+  name_id: MultiMediumBots-v3-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiMediumBots-v3-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiPeople-v1-t1-erm3
+  name_id: MultiPeople-v1-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiPeople-v1-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiSmallBots-v1-t1-erm3
+  name_id: MultiSmallBots-v1-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v1-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiSmallBots-v2-t1-erm3
+  name_id: MultiSmallBots-v2-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v2-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiSmallBots-v3-t1-erm3
+  name_id: MultiSmallBots-v3-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v3-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/SinglePerson-v1-t1-erm3
+  name_id: SinglePerson-v1-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/SinglePerson-v1-t1
+- detection_frame_offset: 0
+  detection_path: /home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/SinglePerson-v2-t1-erm3
+  name_id: SinglePerson-v2-t1
+  synthetic_fps: 30
+  synthetic_frame_offset: 7
+  synthetic_path: /home/colino/hawk/synthetic_ground_truth/static_environment/SinglePerson-v2-t1
+geometry_mode: 3d
+results_recording:
+  enabled: true
+  output_dir: detection_evaluation/results/temp_fs_comp/multi_eucdist_3ddet-ermis_det_3-static_environment-all-t1

@@ -7,7 +7,7 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 results_recording:
   enabled: True
-  output_dir: 'detection_evaluation/results/temp_ap_comp/multi_geom_3ddet-ermis_det_3-dynamic_no_occlusion-all-t1'
+  output_dir: 'detection_evaluation/results/temp_fs_comp/multi_geom_3ddet-ermis_det_3-dynamic_no_occlusion-all-t1'
 
 evaluation_data: [
   {

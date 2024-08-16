@@ -1,0 +1,69 @@
+#euclidean_distance_thresholds: [0.1, 0.15, 0.20, 0.25, 0.375, 0.5, 0.75, 1., 1.5, 2.]
+#euclidean_distance_thresholds: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8, 1.85, 1.9, 1.95, 2.0]
+euclidean_distance_thresholds: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+
+geometry_mode: '3d'
+
+camera_position: [-9.91, 4.97, 0.5]
+camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313e-16], [-4.4408920985006257e-16, -2.220446049250314e-16, 1.0000000000000002], [4.440892098500626e-16, -1.0000000000000002, -4.440892098500626e-16] ]
+
+results_recording:
+  enabled: True
+  #output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-static_environment-MultiLargeBots-v1-t1-t1'
+  #output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-static_environment-MultiLargeBots-v2-t1-t1'
+  #output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-static_environment-MultiSmallBots-v3-t1-t1'
+  #output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-dynamic_no_occlusion-MultiMediumLargeBots-v1-t1-t1'
+  #output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-dynamic_no_occlusion-SingleLargeForkliftB-v1-t1-t1'
+  output_dir: 'detection_evaluation/results/specifics_comp/detailed_multi_eucdist_3ddet-ermis_det_3-dynamic_no_occlusion-SingleLargeForkliftC-v1-t1-t1'
+
+evaluation_data: [
+  #{
+  #  name_id: 'MultiLargeBots-v1-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiLargeBots-v1-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiLargeBots-v1-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 7,
+  #  synthetic_fps: 30,
+  #},
+  #{
+  #  name_id: 'MultiLargeBots-v2-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiLargeBots-v2-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiLargeBots-v2-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 7,
+  #  synthetic_fps: 30,
+  #},
+  #{
+  #  name_id: 'MultiSmallBots-v3-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiSmallBots-v3-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v3-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 7,
+  #  synthetic_fps: 30,
+  #},
+  #{
+  #  name_id: 'MultiMediumLargeBots-v1-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/MultiMediumLargeBots-v1-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/MultiMediumLargeBots-v1-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 6,
+  #  synthetic_fps: 30,
+  #},
+  #{
+  #  name_id: 'SingleLargeForkliftB-v1-t1',
+  #  detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1-erm3',
+  #  synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftB-v1-t1',
+  #  detection_frame_offset: 0,
+  #  synthetic_frame_offset: 7,
+  #  synthetic_fps: 30,
+  #},
+  {
+    name_id: 'SingleLargeForkliftC-v1-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleLargeForkliftC-v1-t1',
+    detection_frame_offset: 0,
+    synthetic_frame_offset: 7,
+    synthetic_fps: 30,
+  },
+]
+

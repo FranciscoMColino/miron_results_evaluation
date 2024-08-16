@@ -12,11 +12,11 @@ camera_rotation: [ [1.0000000000000002, 6.661338147750939e-16, 2.220446049250313
 
 evaluation_data:
   {
-    name_id: 'SingleSmallKaya-v1-t1',
-    detection_path: '/home/colino/hawk/detection_data/ermis_detection/dynamic_no_occlusion/SingleSmallKaya-v1-t1-det1',
-    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/dynamic_no_occlusion/SingleSmallKaya-v1-t1',
+    name_id: 'MultiSmallBots-v3-t1',
+    detection_path: '/home/colino/hawk/detection_data/ermis_detection/ermis_v3/static_environment/MultiSmallBots-v3-t1-erm3',
+    synthetic_path: '/home/colino/hawk/synthetic_ground_truth/static_environment/MultiSmallBots-v3-t1',
     detection_frame_offset: 0,
-    synthetic_frame_offset: 6,
+    synthetic_frame_offset: 7,
     synthetic_fps: 30,
   }
 

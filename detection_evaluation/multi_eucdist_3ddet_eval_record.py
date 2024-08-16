@@ -5,6 +5,7 @@ import numpy as np
 import math
 import datetime
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from detection_evaluation.eucdist_3ddet_evaluation import eucdist_evaluate_3ddet_data
 
@@ -115,6 +116,7 @@ def multi_eval_record(config_data):
 
     sims_results = []
     sims_ap_values = [[] for _ in euclidean_distance_thresholds]
+    sims_f1_scores = [[] for _ in euclidean_distance_thresholds]
  
     for data in evaluation_data:
         print_log(f"\nEvaluating data: {data['name_id']}", logging_file)
@@ -139,6 +141,13 @@ def multi_eval_record(config_data):
         #{['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}
         name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
         print_log(f"{name_str} {['{:.2f}'.format(ap[-1]) for ap in sims_ap_values]}", logging_file)
+
+        for i in range(0, len(euclidean_distance_thresholds)):
+            f1_score = 2 * (precision[i] * recall[i]) / (precision[i] + recall[i]) if (precision[i] + recall[i]) > 0 else 0
+            sims_f1_scores[i].append(f1_score)
+
+        name_str = "F1 Score:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+        print_log(f"{name_str} {['{:.2f}'.format(f1[-1]) for f1 in sims_f1_scores]}", logging_file)
         
         sims_results.append(results)
 
@@ -181,6 +190,8 @@ def multi_eval_record(config_data):
     average_translation_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in translation_error_values])
     average_scale_error = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in scale_error_values])
     mean_ap = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in sims_ap_values])
+    average_f1_v1 = np.array([np.mean(values) if len(values) > 0 else 0.0 for values in sims_f1_scores])
+    average_f1_v2 = np.array([2 * (average_precision[i] * average_recall[i]) / (average_precision[i] + average_recall[i]) if (average_precision[i] + average_recall[i]) > 0 else 0 for i in range(0, len(euclidean_distance_thresholds))])
 
     if results_recording_enabled:
         precision_df = pd.concat([precision_df, pd.DataFrame([['mean'] + list(average_precision)], columns=index_row)], ignore_index=True)
@@ -215,6 +226,46 @@ def multi_eval_record(config_data):
     name_str = "Average Precision:".ljust(FIXED_PRETTY_PRINT_LENGTH)
     print_log(f"{name_str} {['{:.2f}'.format(ap) for ap in mean_ap]}", logging_file)
 
+    name_str = "Average F1_v1 Score:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+    print_log(f"{name_str} {['{:.2f}'.format(f1) for f1 in average_f1_v1]}", logging_file)
+
+    name_str = "Average F1_v2 Score:".ljust(FIXED_PRETTY_PRINT_LENGTH)
+    print_log(f"{name_str} {['{:.2f}'.format(f1) for f1 in average_f1_v2]}", logging_file)
+
+    
+    x_step = 0.05 #0.05
+    y_step = 0.1 #0.1
+
+    # plot precision and recall according to the thresholds
+    #plt.figure(figsize=(14, 6))
+    plt.figure(figsize=(4, 6))
+    plt.subplots_adjust(bottom=0.3, left=0.1, right=0.975)
+    plt.plot(euclidean_distance_thresholds, average_precision, label='Precision', color='red')
+    plt.plot(euclidean_distance_thresholds, average_recall, label='Recall', color='blue')
+    plt.xlabel('Thresholds')
+    plt.ylabel('Values')
+    plt.title('Precision and Recall')
+    plt.yticks(np.arange(0, 1 + y_step, y_step))
+    plt.xticks(np.arange(min(euclidean_distance_thresholds), max(euclidean_distance_thresholds) + x_step, x_step), 
+           rotation=45) 
+    plt.legend()
+    plt.grid()
+    translation_error = average_translation_error[0]
+    scale_error = average_scale_error[0]
+    # Formatting metrics with 3 decimal places
+    metrics_text = (
+        f"Translation Error: {translation_error:>6.3f}\n"
+        f"Scale Error:       {scale_error:>6.3f}"
+    )
+    # Adding a text box for additional metrics on the right side of the plot
+    #plt.text(1.05, 0.5, metrics_text, fontsize=12, fontfamily='monospace', bbox=dict(facecolor='white', alpha=0.5),
+    #        horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
+    plt.text(0, -0.3, metrics_text, fontsize=12, fontfamily='monospace', bbox=dict(facecolor='white', alpha=0.5),
+            horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
+    if results_recording_enabled:
+        plt.savefig(os.path.join(results_recording_output_dir, 'eucdist_plot.png'))
+    plt.show()
+        
 
 def main():
     parser = argparse.ArgumentParser(description='Benchmark detection against synthetic data')
